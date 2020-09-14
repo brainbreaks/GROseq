@@ -1,1 +1,62 @@
 This derictory is for files and scripts that should be used for testing
+GRU-seq
+
+1. Install docker
+https://docs.docker.com/engine/install/ubuntu/
+
+2. Post-installation
+https://docs.docker.com/engine/install/linux-postinstall/
+
+3. Restart
+
+
+5. Files
+Samtool/chromInfo_mm9.txt = http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
+Samtool/chromInfo_hg19.txt = http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
+conv_rpkm/{0}/transcripts.txt
+# /usr/local/homer/data/uniqmap/mm9-uniqmap
+
+4. Requirements
+Python: bx, argparse, qcmodule
+Linux: +bedtools, +samtools, +bowtie2, +HOMER
+
+Masked or Unmasked reference genome?
+
+Base images
+docker pull python:2.7.18
+python:2.7.18
+
+
+Running pipeline
+
+1. GROSeqPL -f <file> -g <genome> -o <output>
+	file - Comma-separated list of files containing unpaired reads to be aligned, e.g. lane1.fq,lane2.fq,lane3.fq,lane4.fq.
+	genome - The basename of the index for the reference genome. The basename is the name of any of the index files up to but not including the final .1.bt2 / .rev.1.bt2
+	output - Output
+bowtie2 -x <genome> -U <file> -p 6 --non-deterministic -S alignment/<output>.sam
+
+2.  GROSeqPL -f1 <file1> -f2 <file2> -g <genome> -o <output>
+	file1 - Comma-separated list of files containing mate 1s (filename usually includes _1), e.g. -1 flyA_1.fq,flyB_1.fq
+	file2 - Comma-separated list of files containing mate 2s (filename usually includes _2), e.g. -2 flyA_2.fq,flyB_2.fq
+	genome - The basename of the index for the reference genome. The basename is the name of any of the index files up to but not including the final .1.bt2 / .rev.1.bt2
+	output - Output
+bowtie2 -x {2} -1 {0} -2 {3} -p 6 --non-deterministic -S alignment/{1}.sam
+
+docker run -it ARGUMENTS
+
+
+Build bowtie index
+bowtie2-build genomes.fna ecoli
+wget https://genome-idx.s3.amazonaws.com/bt/hg19.zip
+unzip hg19.zip -d hg19_preindexed
+
+
+# Build hg19 bowtie2 index
+wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz -O hg19.tar.gz
+tar xjf data/hg19.tar.gz -C hg19_chromFa
+cat hg19_chromFa/*.fa > hg19.fa
+
+# Build mm9 bowtie2 index
+wget http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/chromFa.tar.gz -O mm9.tar.gz
+tar xjf data/mm9.tar.gz -C mm9_chromFa
+cat mm9_chromFa/*.fa > mm9.fa

@@ -1,61 +1,69 @@
-GRU-seq
+import tarfile
+import urllib
+import requests
+import argparse
+import zipfile
+import tqdm
+import tempfile
+import re
+import shutil
 
-1. Install docker
-https://docs.docker.com/engine/install/ubuntu/
+def download_file(url):
+	if re.match("^(http|ftp)", url):
+		response = requests.get(url, stream=True)
+		total_size_in_bytes= int(response.headers.get('content-length', 0))
+		block_size = 1024 #1 Kibibyte
 
-2. Post-installation
-https://docs.docker.com/engine/install/linux-postinstall/
+		progress_bar = tqdm.tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+		with tempfile.NamedTemporaryFile(mode="wb", delete=False) as file:
+			path = file.name
+			for data in response.iter_content(block_size):
+				progress_bar.update(len(data))
+				file.write(data)
+			progress_bar.close()
+		if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+			print("ERROR, something went wrong")
+	else: # local file
+		tmp = tempfile.NamedTemporaryFile(delete=False)
+		tmp.close()
+		shutil.copy2(url, tmp.name)
+		path = tmp.name
 
-3. Restart
+	return path
 
-
-5. Files
-Samtool/chromInfo_mm9.txt = http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes
-Samtool/chromInfo_hg19.txt = http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes
-conv_rpkm/{0}/transcripts.txt
-# /usr/local/homer/data/uniqmap/mm9-uniqmap
-
-4. Requirements
-Python: bx, argparse, qcmodule
-Linux: +bedtools, +samtools, +bowtie2, +HOMER
-
-Masked or Unmasked reference genome?
-
-Base images
-docker pull python:2.7.18
-python:2.7.18
-
-
-Running pipeline
-
-1. GROSeqPL -f <file> -g <genome> -o <output>
-	file - Comma-separated list of files containing unpaired reads to be aligned, e.g. lane1.fq,lane2.fq,lane3.fq,lane4.fq.
-	genome - The basename of the index for the reference genome. The basename is the name of any of the index files up to but not including the final .1.bt2 / .rev.1.bt2
-	output - Output
-bowtie2 -x <genome> -U <file> -p 6 --non-deterministic -S alignment/<output>.sam
-
-2.  GROSeqPL -f1 <file1> -f2 <file2> -g <genome> -o <output>
-	file1 - Comma-separated list of files containing mate 1s (filename usually includes _1), e.g. -1 flyA_1.fq,flyB_1.fq
-	file2 - Comma-separated list of files containing mate 2s (filename usually includes _2), e.g. -2 flyA_2.fq,flyB_2.fq
-	genome - The basename of the index for the reference genome. The basename is the name of any of the index files up to but not including the final .1.bt2 / .rev.1.bt2
-	output - Output
-bowtie2 -x {2} -1 {0} -2 {3} -p 6 --non-deterministic -S alignment/{1}.sam
-
-docker run -it ARGUMENTS
+def download_raw_genome(url):
+	download_file(url)
+	stream = urllib.request.urlopen(url)
+	tar = tarfile.open(fileobj=stream, mode="r|gz")
+	tar.extractall()
 
 
-Build bowtie index
-bowtie2-build genomes.fna ecoli
-wget https://genome-idx.s3.amazonaws.com/bt/hg19.zip
-unzip hg19.zip -d hg19_preindexed
+def download_bowtie2_index(url, dest):
+	print("Downloading bowtie index '{}'\n".format(url))
+	path = download_file(url)
+
+	print("Extracting bowtie2 index into '{}'\n".format(dest))
+	with zipfile.ZipFile(path, 'r') as zf:
+		for member in tqdm.tqdm(zf.infolist(), desc='Extracting '):
+			try:
+				zf.extract(member, dest)
+			except zipfile.error as e:
+				pass
+		# zip.extractall(dest)
+
+def main():
+	# path = download_bowtie2_index("https://file-examples-com.github.io/uploads/2017/02/zip_2MB.zip")
+	# download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz")
+	# download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/chromFa.tar.gz")
+	#
+	# download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/mm9.zip", "data/mm9")
+	# download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/hg19.zip", "data/mm9")
+	download_bowtie2_index("/home/s215v/Downloads/mm9.zip", "data/mm9")
+	download_bowtie2_index("/home/s215v/Downloads/hg19.zip", "data/hg19")
 
 
-# Build hg19 bowtie2 index
-wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz -O hg19.tar.gz
-tar xjf data/hg19.tar.gz -C hg19_chromFa
-cat hg19_chromFa/*.fa > hg19.fa
+	return
 
-# Build mm9 bowtie2 index
-wget http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/chromFa.tar.gz -O mm9.tar.gz
-tar xjf data/mm9.tar.gz -C mm9_chromFa
-cat mm9_chromFa/*.fa > mm9.fa
+if __name__ == "__main__":
+    # execute only if run as a script
+    main()
