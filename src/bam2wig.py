@@ -69,6 +69,11 @@ def main():
 	parser.add_option("-q","--mapq",action="store",type="int",dest="map_qual",default=30,help="Minimum mapping quality to determine \"uniquely mapped\". default=%default")
 
 	(options,args)=parser.parse_args()
+
+	# TODO: remove
+	print "--------------------------------------"
+	print options.input_file
+	print "--------------------------------------"
 	
 	
 	if not (options.output_prefix and options.input_file and options.chromSize and options.output_prefix):

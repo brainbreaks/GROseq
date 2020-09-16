@@ -5,6 +5,7 @@ Convert bam file to bigwig file
 import sys, os
 import argparse
 import glob
+from misc import call
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert BAM file to BIGWIG files')
@@ -37,23 +38,23 @@ def parseFILE(args):
 
     if args.strandspecific == 'F':
         prefix = args.bamfile.replace('.bam', '')
-        os.system('/home/zhoudu/anaconda/bin/bam2wig.py -i %s -o %s -s %s %s' % (args.bamfile, prefix, genomefile, normdef))
-        os.system('rm -rf %s.wig' % prefix)
+        call('python2 /bin/bam2wig.py -i %s -o %s -s %s %s' % (args.bamfile, prefix, genomefile, normdef))
+        call('rm -rf %s.wig' % prefix)
     else:
         prefix_pos = args.bamfile.replace('.bam', '.pos')
-        os.system('/usr/anaconda3/bin/samtools view -F 0x10 -hb -o %s.bam %s' % (prefix_pos, args.bamfile))
-        os.system('/usr/anaconda3/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_pos, prefix_pos))
-        os.system('mv %s.sort.bam %s.bam' % (prefix_pos, prefix_pos))
-        os.system('/usr/anaconda3/bin/samtools index %s.bam' % prefix_pos)
-        os.system('/home/zhoudu/anaconda/bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_pos, prefix_pos, genomefile, normdef))
+        call('/bin/samtools view -F 0x10 -hb -o %s.bam %s' % (prefix_pos, args.bamfile))
+        call('/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_pos, prefix_pos))
+        call('mv %s.sort.bam %s.bam' % (prefix_pos, prefix_pos))
+        call('/bin/samtools index %s.bam' % prefix_pos)
+        call('python2 /bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_pos, prefix_pos, genomefile, normdef))
 
         # Need to add minus symbol in minus bw file
         prefix_neg = args.bamfile.replace('.bam', '.neg')
-        os.system('/usr/anaconda3/bin/samtools view -f 0x10 -hb -o %s.bam %s' % (prefix_neg, args.bamfile))
-        os.system('/usr/anaconda3/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_neg, prefix_neg))
-        os.system('mv %s.sort.bam %s.bam' % (prefix_neg, prefix_neg))
-        os.system('/usr/anaconda3/bin/samtools index %s.bam' % prefix_neg)
-        os.system('/home/zhoudu/anaconda/bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_neg, prefix_neg, genomefile, normdef))
+        call('/bin/samtools view -f 0x10 -hb -o %s.bam %s' % (prefix_neg, args.bamfile))
+        call('/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_neg, prefix_neg))
+        call('mv %s.sort.bam %s.bam' % (prefix_neg, prefix_neg))
+        call('/bin/samtools index %s.bam' % prefix_neg)
+        call('python2 /bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_neg, prefix_neg, genomefile, normdef))
         fout = open('%s.2.wig' % prefix_neg, 'w')
         for line in open('%s.wig' % prefix_neg):
             if line.startswith('variableStep'):
@@ -61,11 +62,11 @@ def parseFILE(args):
             else:
                 fout.write('%s\t-%s\n' % (line.split()[0], line.split()[1]))
         fout.close()
-        os.system('wigToBigWig -clip %s.2.wig %s %s.bw' % (prefix_neg, genomefile, prefix_neg))
+        call('wigToBigWig -clip %s.2.wig %s %s.bw' % (prefix_neg, genomefile, prefix_neg))
 
-        #os.system('rm -rf %s.bam* %s.bam*' % (prefix_pos, prefix_neg))
-        os.system('rm -rf %s.wig %s.wig' % (prefix_pos, prefix_neg))
-        os.system('rm -rf %s.2.wig' % (prefix_neg))
+        #call('rm -rf %s.bam* %s.bam*' % (prefix_pos, prefix_neg))
+        call('rm -rf %s.wig %s.wig' % (prefix_pos, prefix_neg))
+        call('rm -rf %s.2.wig' % (prefix_neg))
 
 def main():
     args = parse_args()

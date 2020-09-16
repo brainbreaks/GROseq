@@ -35,12 +35,20 @@ Running pipeline
 	output - Output
 bowtie2 -x <genome> -U <file> -p 6 --non-deterministic -S alignment/<output>.sam
 
-2.  GROSeqPL -f1 <file1> -f2 <file2> -g <genome> -o <output>
+2. GROSeqPL -f1 <file1> -f2 <file2> -g <genome> -o <output>
 	file1 - Comma-separated list of files containing mate 1s (filename usually includes _1), e.g. -1 flyA_1.fq,flyB_1.fq
 	file2 - Comma-separated list of files containing mate 2s (filename usually includes _2), e.g. -2 flyA_2.fq,flyB_2.fq
 	genome - The basename of the index for the reference genome. The basename is the name of any of the index files up to but not including the final .1.bt2 / .rev.1.bt2
 	output - Output
 bowtie2 -x {2} -1 {0} -2 {3} -p 6 --non-deterministic -S alignment/{1}.sam
+
+docker cp test/SRR2820488.1 cefd0b9fe448:/data/SRR2820488.1
+python /bin/GROSeqPL_v3_updated.py -f /data/SRR2820488.1 -g mm9 -o results.txt --chromInfo /data/mm9.chrom.sizes
+
+
+
+docker cp test/SRR2820488_first100.fastq cefd0b9fe448:/data/SRR2820488_first100.fastq
+python /bin/GROSeqPL_v3_updated.py -f /data/SRR2820488_first100.fastq -g mm9 -o results.txt --chromInfo /data/mm9.chrom.sizes
 
 docker run -it ARGUMENTS
 
