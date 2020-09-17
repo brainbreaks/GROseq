@@ -109,14 +109,3 @@ COPY src/*  $DESTINATION/
 WORKDIR /mount
 
 ENTRYPOINT ["groseq2"]
-#CMD ["groseq2"]
-
-
-# Build container using
-# docker build -t groseq .
-
-# Run container. Current directory will be accessible inside the container
-# docker run -v ${PWD}:/mount -u $(id -u ${USER}):$(id -g ${USER}) groseq -f SRR2820488_first100.fastq -g /data/mm9 -o results.txt --chromInfo mm9.chrom.sizes
-
-# Inspect container
-# docker run -it --entrypoint bash groseq

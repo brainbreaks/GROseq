@@ -97,7 +97,7 @@ hg17	v6.4	human genome and annotation for UCSC hg17	http://homer.ucsd.edu/homer/
 hg18	v6.4	human genome and annotation for UCSC hg18	http://homer.ucsd.edu/homer/data/genomes/hg18.v6.4.zip	data/genomes/hg18/	human,default
 hg19	v6.4	human genome and annotation for UCSC hg19	http://127.0.0.1:8000/dependencies/homer/hg19.v6.4.zip	data/genomes/hg19/	human,default
 hg38	v6.4	human genome and annotation for UCSC hg38	http://homer.ucsd.edu/homer/data/genomes/hg38.v6.4.zip	data/genomes/hg38/	human,default
-mm10	v6.4	mouse genome and annotation for UCSC mm10	http://homer.ucsd.edu/homer/data/genomes/mm10.v6.4.zip	data/genomes/mm10/	mouse,default
+mm10	v6.4	mouse genome and annotation for UCSC mm10	http://127.0.0.1:8000/dependencies/homer/mm10.v6.4.zip	data/genomes/mm10/	mouse,default
 mm8	v6.4	mouse genome and annotation for UCSC mm8	http://homer.ucsd.edu/homer/data/genomes/mm8.v6.4.zip	data/genomes/mm8/	mouse,default
 mm9	v6.4	mouse genome and annotation for UCSC mm9	http://127.0.0.1:8000/dependencies/homer/mm9.v6.4.zip	data/genomes/mm9/	mouse,default
 panPan1	v6.4	human genome and annotation for UCSC panPan1	http://homer.ucsd.edu/homer/data/genomes/panPan1.v6.4.zip	data/genomes/panPan1/	human,default
