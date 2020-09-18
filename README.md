@@ -20,5 +20,5 @@ Run container. Current directory will be accessible inside the container
 
 Inspect container
 -------------------
-> docker run -it --entrypoint bash groseq
+> docker run -v ${PWD}:/mount -u $(id -u ${USER}):$(id -g ${USER}) -it --entrypoint bash groseq
  

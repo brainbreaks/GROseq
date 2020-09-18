@@ -88,7 +88,8 @@ def GROSeqPL(args):
     convergent(args)
     gmean_cal(args)
 
-    call("rm -rf alignment/{0}.sam".format(args.output))
+    # TODO: leave SAM file for debugging
+    # call("rm -rf alignment/{0}.sam".format(args.output))
 
 def main():
     args = parse_args()

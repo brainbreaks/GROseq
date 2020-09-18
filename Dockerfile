@@ -32,7 +32,6 @@ ENV GFOLD_URL=http://127.0.0.1:8000/dependencies/gfold-1.1.4-gsl2.2_2.tar.bz2
 ENV GSL_URL=http://127.0.0.1:8000/dependencies/gsl-2.2.1.tar.gz
 ENV bigWigToWig_URL=http://127.0.0.1:8000/dependencies/bigWigToWig
 ENV wigToBigWig_URL=http://127.0.0.1:8000/dependencies/wigToBigWig
-ENV GFOLD_URL=http://127.0.0.1:8000/dependencies/gfold-1.1.4-gsl2.2_2.tar.bz2
 ENV BXPYTHON_URL=http://127.0.0.1:8000/dependencies/bx-python.zip
 
 # Copy GRO-seq files to docker image
@@ -91,21 +90,22 @@ RUN ws && wget $wigToBigWig_URL -O /bin/wigToBigWig && chmod 755 $DESTINATION/wi
 
 # Install gfold
 RUN ws && wget $GFOLD_URL -O $DESTINATION/gfold_dir.tar.bz2 && \
-    mkdir $DESTINATION/gfold_dir && tar xbjf $DESTINATION/gfold_dir.tar.bz2 -C $DESTINATION/gfold_dir && \
-    mv $DESTINATION/gfold_dir/bin/gfold $DESTINATION/gfold && chmod 755 $DESTINATION//gfold; \
+    mkdir $DESTINATION/gfold_dir && tar xvjf $DESTINATION/gfold_dir.tar.bz2 -C $DESTINATION/gfold_dir && \
+    mv $DESTINATION/gfold_dir/bin/gfold $DESTINATION/gfold && chmod 755 $DESTINATION/gfold; \
     rm -rf $DESTINATION/gfold_dir*;
 
 # Install GSL 2.2.1
 RUN ws && wget $GSL_URL && \
     tar xzf gsl-2.2.1.tar.gz && \
-    cd gsl-2.2.1 && ./configure && make && make install
+    cd gsl-2.2.1 && ./configure && make && make install && \
+    ldconfig
 
 # Create shortcut for running GRO-seq
-RUN echo '#!/bin/bash \n python2 /bin/GROSeqPL_v3_updated.py "$@"' > $DESTINATION/groseq2; chmod 755 $DESTINATION/groseq2
+RUN echo '#!/bin/bash \n python2 /bin/GROSeqPL_v3_updated.py "$@"' > $DESTINATION/groseq; chmod 755 $DESTINATION/groseq
 
 # Copy pipeline source files
 COPY src/*  $DESTINATION/
 
 WORKDIR /mount
 
-ENTRYPOINT ["groseq2"]
+ENTRYPOINT ["groseq"]
