@@ -6,6 +6,7 @@ import sys, os
 import argparse
 import glob
 from misc import call
+import multiprocessing
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert BAM file to BIGWIG files')
@@ -20,6 +21,7 @@ def parse_args():
                               type = str, default = "T", choices={'F', 'T'},
                               help = "Do normalization of bigwig to coverage \
                               of 10 million 100nt reads (T)" )
+    parser.add_argument("--threads", dest="threads", default=multiprocessing.cpu_count(), help="Number of threads to use [default is all available - {}]".format(multiprocessing.cpu_count()))
     #parser.add_argument("-q", "MAP_QUAL", dest = "MAP_QUAL", type = int, default = 30,
     #                          help = "Minimum mapping quality for an alignment to be called 'uniquely mapped'. default=30" )
     args = parser.parse_args()
@@ -42,18 +44,18 @@ def parseFILE(args):
         call('rm -rf %s.wig' % prefix)
     else:
         prefix_pos = args.bamfile.replace('.bam', '.pos')
-        call('/bin/samtools view -F 0x10 -hb -o %s.bam %s' % (prefix_pos, args.bamfile))
-        call('/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_pos, prefix_pos))
+        call('/bin/samtools view -@ %s -F 0x10 -hb -o %s.bam %s' % (args.threads, prefix_pos, args.bamfile))
+        call('/bin/samtools sort -@ %s %s.bam -o %s.sort.bam' % (args.threads, prefix_pos, prefix_pos))
         call('mv %s.sort.bam %s.bam' % (prefix_pos, prefix_pos))
-        call('/bin/samtools index %s.bam' % prefix_pos)
+        call('/bin/samtools index -@ %s %s.bam' % (args.threads, prefix_pos))
         call('python2 /bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_pos, prefix_pos, genomefile, normdef))
 
         # Need to add minus symbol in minus bw file
         prefix_neg = args.bamfile.replace('.bam', '.neg')
-        call('/bin/samtools view -f 0x10 -hb -o %s.bam %s' % (prefix_neg, args.bamfile))
-        call('/bin/samtools sort %s.bam -o %s.sort.bam' % (prefix_neg, prefix_neg))
+        call('/bin/samtools view -@ %s -f 0x10 -hb -o %s.bam %s' % (args.threads, prefix_neg, args.bamfile))
+        call('/bin/samtools sort -@ %s %s.bam -o %s.sort.bam' % (args.threads, prefix_neg, prefix_neg))
         call('mv %s.sort.bam %s.bam' % (prefix_neg, prefix_neg))
-        call('/bin/samtools index %s.bam' % prefix_neg)
+        call('/bin/samtools index -@ %s %s.bam' % (args.threads, prefix_neg))
         call('python2 /bin/bam2wig.py -i %s.bam -o %s -s %s %s' % (prefix_neg, prefix_neg, genomefile, normdef))
         fout = open('%s.2.wig' % prefix_neg, 'w')
         for line in open('%s.wig' % prefix_neg):

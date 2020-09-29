@@ -1,5 +1,6 @@
 import sys, os
 import argparse
+import multiprocessing
 from misc import call
 
 def parse_args():
@@ -11,6 +12,7 @@ def parse_args():
     parser.add_argument("-g", dest = "genome", type = str, required = False, help = "Genome file to align to (do not include .fa)" )
     parser.add_argument("-cg", dest = "custom_genome", type = str, required = False, help = "Custom Genome file to align to (includes .fa)" )
     parser.add_argument("--chromInfo", dest = "chromInfo", type = str, required = True, help = "chromInfo file" )
+    parser.add_argument("--threads", dest="threads", default=multiprocessing.cpu_count(), help="Number of threads to use [default is all available - {}]".format(multiprocessing.cpu_count()))
     args = parser.parse_args()
     return args
 
@@ -33,20 +35,22 @@ def fq_to_bam(args):
         args.genome = args.custom_genome
 
     if args.file_1:
-        call("/bin/bowtie2/bowtie2 -x {2} -1 {0} -2 {3} -p 6 --non-deterministic -S alignment/{1}.sam".format(args.file_1, args.output, args.genome, args.file_2))
+        call("/bin/bowtie2/bowtie2 -p {threads} -x {genome} -1 {file_1} -2 {file_2} --non-deterministic -S alignment/{output}.sam".format(**vars(args)))
     else:
-        call("/bin/bowtie2/bowtie2 -x {2} -U {0} -p 6 --non-deterministic -S alignment/{1}.sam".format(args.file, args.output, args.genome))
-    call("/bin/samtools view -bhS -F 4 alignment/{0}.sam -o alignment/{0}.bam".format(args.output))
-    call("/bin/samtools sort alignment/{0}.bam -o alignment/{0}.sort.bam".format(args.output))
+        call("/bin/bowtie2/bowtie2 -p {threads} -x {genome} -U {file} --non-deterministic -S alignment/{output}.sam".format(**vars(args)))
+    call("/bin/samtools view -@ {threads} -bhS -F 4 alignment/{output}.sam -o alignment/{output}.bam".format(**vars(args)))
+    call("/bin/samtools sort -@ {threads} alignment/{output}.bam -o alignment/{output}.sort.bam".format(**vars(args)))
+
     call("mv alignment/{0}.sort.bam alignment/{0}.bam".format(args.output))
-    call("/bin/samtools index alignment/{0}.bam alignment/{0}.bam.bai".format(args.output))
-    call("/bin/samtools stats alignment/{0}.bam > alignment/{0}.stats.txt".format(args.output))
+    call("/bin/samtools index alignment/{output}.bam alignment/{output}.bam.bai".format(**vars(args)))
+    call("/bin/samtools stats alignment/{0}.bam > alignment/{0}.stats.txt".format(args.output), shell=True)
+
     return
 
 def wig_convert(args):
     #call("/bin/samtools view -b -F 0x10 alignment/{0}.bam -o alignment/{0}.pos.bam".format(args.output))
     #call("/bin/samtools view -b -f 0x10 alignment/{0}.bam -o alignment/{0}.neg.bam".format(args.output))
-    call("python3 /bin/bam2bw.py -b alignment/{0}.bam -g {1} -s T".format(args.output,args.chromInfo))
+    call("python2 /bin/bam2bw.py -b alignment/{0}.bam -g {1} -s T".format(args.output, args.chromInfo))
     return
 
 def homer(args):
