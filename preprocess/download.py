@@ -91,6 +91,7 @@ def download_bowtie2_index(url, dest, overwrite=False):
 
 
 def main():
+
 	# This works
 	download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/mm9.zip", "data/mm9")
 	download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/mm10.zip", "data/mm10")
@@ -104,6 +105,7 @@ def main():
 	download_file("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes", "data/hg19/hg19.chrom.sizes")
 
 	# Homer packages
+	download_file("http://homer.ucsd.edu/homer/configureHomer.pl", "data/dependencies/homer/configureHomer.pl")
 	download_file("http://homer.ucsd.edu/homer/data/software/homer.v4.11.1.zip", "data/dependencies/homer/homer.v4.11.1.zip")
 	download_file("http://homer.ucsd.edu/homer/data/genomes/hg19.v6.4.zip", "data/dependencies/homer/hg19.v6.4.zip")
 	download_file("http://homer.ucsd.edu/homer/data/genomes/mm9.v6.4.zip", "data/dependencies/homer/mm9.v6.4.zip")
@@ -120,6 +122,15 @@ def main():
 	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig", "data/dependencies/wigToBigWig")
 	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigToWig", "data/dependencies/bigWigToWig")
 	download_file("https://github.com/bxlab/bx-python/archive/master.zip", "data/dependencies/bx-python.zip")
+	download_file("https://netcologne.dl.sourceforge.net/project/rseqc/RSeQC-2.6.4.tar.gz", "data/dependencies/RSeQC-2.6.4.tar.gz")
+	download_file("https://github.com/numpy/numpy/releases/download/v1.16.6/numpy-1.16.6.tar.gz", "data/dependencies/numpy-1.16.6.tar.gz")
+	download_file("https://github.com/cython/cython/archive/0.29.19.tar.gz", "data/dependencies/cython-0.29.19.tar.gz")
+	download_file("https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/python-nose/nose-1.0.0%20(1).tar.gz", "data/dependencies/nose-1.0.0.tar.gz")
+	download_file("https://github.com/pysam-developers/pysam/archive/v0.16.0.tar.gz", "data/dependencies/pysam-0.16.0.tar.gz")
+
+
+
+
 
 	if os.path.exists("data/homer2"):
 		print("HOMER is already downloaded")

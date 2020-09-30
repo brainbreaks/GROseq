@@ -9,6 +9,7 @@ class bcolors:
     COMMAND = '\033[4m'
     WARNING = '\033[33m'
     OUTPUT = ''
+    END_COLOR = '\033[0m'
 
 def call(cmd, shell=False):
     start = time.time()
@@ -18,7 +19,7 @@ def call(cmd, shell=False):
         end = time.time()
         print(">>> {}. FINISHED in {:.0f}s".format(cmd, end - start))
     else:
-        print(">>> {1}{0}{1}".format(cmd, bcolors.COMMAND))
+        print(">>> {}{}{}".format(bcolors.COMMAND, cmd, bcolors.END_COLOR))
         cmd_list = re.split("\\s+", cmd)
         p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=os.getcwd())
         out, err = p.communicate()
@@ -38,11 +39,11 @@ def call(cmd, shell=False):
 
         if err:
             for l in err_list:
-                print("{1}{0}{1}".format(l, bcolors.WARNING))
+                print("{}{}{}".format(bcolors.WARNING, l, bcolors.END_COLOR))
         if out:
             for l in out_list:
-                print("{1}{0}{1}".format(l, bcolors.OUTPUT))
+                print("{}{}{}".format(bcolors.OUTPUT, l, bcolors.END_COLOR))
 
         if p.returncode != 0:
-            print(bcolors.FAIL + "EXTERNAL CALL FAILED. TERMINATING..." + bcolors.FAIL)
+            print(bcolors.FAIL + "EXTERNAL CALL FAILED. TERMINATING..." + bcolors.END_COLOR)
             exit(1)
