@@ -22,8 +22,8 @@ Run container
 To run a container first put location of reference genome fasta file (genome.fa) and all of the bowtie2 index files (genome.*.bt2) into separate directory. You will need
 to reference them with -g parameter (e.g. ./mm10)
 Run container. Current directory will be accessible inside the container
-> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -g ./mm10 -o results.txt --chromInfo mm10.chrom.sizes
-> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) -it groseq -f ./path/to/sample -g ./path/to/genome -o ./path/to/results --chromInfo mm10.chrom.size
+> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) --name groseq_test -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -g ./mm10 -o results --chromInfo mm10.chrom.sizes
+> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) --name <memorable_name> -it groseq -f ./path/to/sample -g ./path/to/genome -o ./path/to/results --chromInfo mm10.chrom.size
 
 Inspect container
 -------------------

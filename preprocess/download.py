@@ -13,7 +13,7 @@ import glob
 
 def download_file(url, dest=None, description=None, overwrite=False):
 	if description is None:
-		description = 'Downloading file "{}" ==> "{}". Already exists, skipping...'.format(url, dest)
+		description = 'Downloading file "{}" ==> "{}"...'.format(url, dest)
 
 	if not overwrite and dest and os.path.isfile(dest):
 		print(description)
@@ -105,28 +105,31 @@ def main():
 	download_file("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes", "data/hg19/hg19.chrom.sizes")
 
 	# Homer packages
-	download_file("http://homer.ucsd.edu/homer/configureHomer.pl", "data/dependencies/homer/configureHomer.pl")
-	download_file("http://homer.ucsd.edu/homer/data/software/homer.v4.11.1.zip", "data/dependencies/homer/homer.v4.11.1.zip")
-	download_file("http://homer.ucsd.edu/homer/data/genomes/hg19.v6.4.zip", "data/dependencies/homer/hg19.v6.4.zip")
-	download_file("http://homer.ucsd.edu/homer/data/genomes/mm9.v6.4.zip", "data/dependencies/homer/mm9.v6.4.zip")
-	download_file("http://homer.ucsd.edu/homer/data/genomes/mm10.v6.4.zip", "data/dependencies/homer/mm10.v6.4.zip")
-	download_file("http://homer.ucsd.edu/homer/data/organisms/human.v6.3.zip", "data/dependencies/homer/human.v6.3.zip")
-	download_file("http://homer.ucsd.edu/homer/data/organisms/mouse.v6.3.zip", "data/dependencies/homer/mouse.v6.3.zip")
-	#
+	# download_file("http://homer.ucsd.edu/homer/configureHomer.pl", "data/dependencies/homer/configureHomer.pl")
+	# download_file("http://homer.ucsd.edu/homer/data/software/homer.v4.11.1.zip", "data/dependencies/homer/homer.v4.11.1.zip")
+	# download_file("http://homer.ucsd.edu/homer/data/genomes/hg19.v6.4.zip", "data/dependencies/homer/hg19.v6.4.zip")
+	# download_file("http://homer.ucsd.edu/homer/data/genomes/mm9.v6.4.zip", "data/dependencies/homer/mm9.v6.4.zip")
+	# download_file("http://homer.ucsd.edu/homer/data/genomes/mm10.v6.4.zip", "data/dependencies/homer/mm10.v6.4.zip")
+	# download_file("http://homer.ucsd.edu/homer/data/organisms/human.v6.3.zip", "data/dependencies/homer/human.v6.3.zip")
+	# download_file("http://homer.ucsd.edu/homer/data/organisms/mouse.v6.3.zip", "data/dependencies/homer/mouse.v6.3.zip")
+
 	# # Download libraries used in the pipeline
-	download_file("https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/bowtie2-2.2.9-linux-x86_64.zip", "data/dependencies/bowtie2-2.2.9-linux-x86_64.zip")
-	download_file("https://github.com/samtools/samtools/releases/download/1.6/samtools-1.6.tar.bz2", "data/dependencies/samtools-1.6.tar.bz2")
-	download_file("https://github.com/arq5x/bedtools2/releases/download/v2.29.1/bedtools-2.29.1.tar.gz", "data/dependencies/bedtools-2.29.1.tar.gz")
-	download_file("https://anaconda.org/bioconda/gfold/1.1.4/download/linux-64/gfold-1.1.4-gsl2.2_2.tar.bz2", "data/dependencies/gfold-1.1.4-gsl2.2_2.tar.bz2")
-	download_file("http://www.artfiles.org/gnu.org/gsl/gsl-2.2.1.tar.gz", "data/dependencies/gsl-2.2.1.tar.gz")
-	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig", "data/dependencies/wigToBigWig")
-	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigToWig", "data/dependencies/bigWigToWig")
-	download_file("https://github.com/bxlab/bx-python/archive/master.zip", "data/dependencies/bx-python.zip")
-	download_file("https://netcologne.dl.sourceforge.net/project/rseqc/RSeQC-2.6.4.tar.gz", "data/dependencies/RSeQC-2.6.4.tar.gz")
-	download_file("https://github.com/numpy/numpy/releases/download/v1.16.6/numpy-1.16.6.tar.gz", "data/dependencies/numpy-1.16.6.tar.gz")
-	download_file("https://github.com/cython/cython/archive/0.29.19.tar.gz", "data/dependencies/cython-0.29.19.tar.gz")
-	download_file("https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/python-nose/nose-1.0.0%20(1).tar.gz", "data/dependencies/nose-1.0.0.tar.gz")
-	download_file("https://github.com/pysam-developers/pysam/archive/v0.16.0.tar.gz", "data/dependencies/pysam-0.16.0.tar.gz")
+	download_file("https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/bowtie2-2.2.9-linux-x86_64.zip", "dependencies/bowtie2-2.2.9-linux-x86_64.zip")
+	download_file("https://master.dl.sourceforge.net/project/samtools/samtools/1.6/samtools-1.6.tar.bz2", "dependencies/samtools-1.6.tar.bz2")
+	download_file("https://github.com/arq5x/bedtools2/releases/download/v2.29.1/bedtools-2.29.1.tar.gz", "dependencies/bedtools-2.29.1.tar.gz")
+	download_file("https://anaconda.org/bioconda/gfold/1.1.4/download/linux-64/gfold-1.1.4-gsl2.2_2.tar.bz2", "dependencies/gfold-1.1.4-gsl2.2_2.tar.bz2")
+	download_file("http://www.artfiles.org/gnu.org/gsl/gsl-2.2.1.tar.gz", "dependencies/gsl-2.2.1.tar.gz")
+	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig", "dependencies/wigToBigWig")
+	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigToWig", "dependencies/bigWigToWig")
+	download_file("https://github.com/bxlab/bx-python/archive/v0.8.9.tar.gz", "dependencies/bx-python-0.8.9.tar.gz")
+	download_file("https://netcologne.dl.sourceforge.net/project/rseqc/RSeQC-2.6.4.tar.gz", "dependencies/RSeQC-2.6.4.tar.gz")
+	download_file("https://github.com/numpy/numpy/releases/download/v1.16.6/numpy-1.16.6.tar.gz", "dependencies/numpy-1.16.6.tar.gz")
+	download_file("https://github.com/cython/cython/archive/0.29.19.tar.gz", "dependencies/cython-0.29.19.tar.gz")
+	download_file("https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/python-nose/nose-1.0.0%20(1).tar.gz", "dependencies/nose-1.0.0.tar.gz")
+	download_file("https://github.com/pysam-developers/pysam/archive/v0.16.0.tar.gz", "dependencies/pysam-0.16.0.tar.gz")
+	download_file("https://github.com/benjaminp/six/archive/1.15.0.tar.gz", "dependencies/six-1.15.0.tar.gz")
+
+
 
 
 

@@ -27,13 +27,9 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def parseFILE(args):
-    if args.genome == 'mm9':
-        genomefile = '/home/zhoudu/Library/Samtool/chromInfo_mm9.txt'
-    elif args.genome == 'hg19':
-        genomefile = '/home/zhoudu/Library/Samtool/chromInfo_hg19.txt'
-    else:
-        genomefile = args.genome
+    genomefile = args.genome
     normdef = ''
     if args.normalization == 'T':
         normdef = ' -t 1000000000 '
@@ -76,4 +72,5 @@ def main():
     args = parse_args()
     parseFILE(args)
 
-main()
+if __name__ == '__main__':
+    main()

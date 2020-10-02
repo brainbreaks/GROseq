@@ -1,7 +1,9 @@
 import sys, os
 import argparse
 import multiprocessing
-from misc import call
+from misc import call, AttrDict
+import bam2bw
+import time
 
 def parse_args():
     parser = argparse.ArgumentParser(description='GRO-Seq Pipeline')
@@ -42,15 +44,26 @@ def fq_to_bam(args):
     call("/bin/samtools sort -@ {threads} alignment/{output}.bam -o alignment/{output}.sort.bam".format(**vars(args)))
 
     call("mv alignment/{0}.sort.bam alignment/{0}.bam".format(args.output))
-    call("/bin/samtools index alignment/{output}.bam alignment/{output}.bam.bai".format(**vars(args)))
-    call("/bin/samtools stats alignment/{0}.bam > alignment/{0}.stats.txt".format(args.output), shell=True)
+    call("/bin/samtools index -@ {threads} alignment/{output}.bam alignment/{output}.bam.bai".format(**vars(args)))
+    call("/bin/samtools stats -@ {threads} alignment/{output}.bam > alignment/{output}.stats.txt".format(**vars(args)), shell=True)
 
     return
 
 def wig_convert(args):
     #call("/bin/samtools view -b -F 0x10 alignment/{0}.bam -o alignment/{0}.pos.bam".format(args.output))
     #call("/bin/samtools view -b -f 0x10 alignment/{0}.bam -o alignment/{0}.neg.bam".format(args.output))
-    call("python2 /bin/bam2bw.py -b alignment/{0}.bam -g {1} -s T".format(args.output, args.chromInfo))
+    # call("python2 /bin/bam2bw.py -b alignment/{0}.bam -g {1} -s T".format(args.output, args.chromInfo))
+
+    bam2bw_args = AttrDict({
+        "threads": args.threads,
+        "bamfile":  "alignment/{}.bam".format(args.output),
+        "genome": args.chromInfo,
+        "strandspecific": "T",
+        "normalization": "T"
+    })
+
+    bam2bw.parseFILE(bam2bw_args)
+
     return
 
 def homer(args):
@@ -63,23 +76,23 @@ def homer(args):
     return
 
 def convergent(args):
-    call("grep -v \"#\" conv_rpkm/{0}/transcripts.txt | awk '{{OFS=\"\t\"}}{{print $2, $3, $4, $1, $6, $5}}' > conv_rpkm/{0}.transcript.bed".format(args.output))
-    call("/bin/bedtools/bedtools sort -i conv_rpkm/{0}.transcript.bed > see".format(args.output))
-    call("mv see conv_rpkm/{0}.transcript.bed".format(args.output))
-    call("grep -v \"+\" conv_rpkm/{0}.transcript.bed > conv_rpkm/{0}.transcripts.minus.bed".format(args.output))
-    call("grep \"+\" conv_rpkm/{0}.transcript.bed > conv_rpkm/{0}.transcripts.plus.bed".format(args.output))
-    call("/bin/bedtools/bedtools multiinter -i conv_rpkm/{0}.transcripts.plus.bed conv_rpkm/{0}.transcripts.minus.bed |grep \"1,2\" |awk \'{{OFS=\"\\t\"}}{{ if ($3-$2>100){{print $1, $2, $3}} }}\' > conv_rpkm/{0}.transcripts.convergent.bed".format(args.output))
+    call("grep -v \"#\" conv_rpkm/{0}/transcripts.txt | awk '{{OFS=\"\t\"}}{{print $2, $3, $4, $1, $6, $5}}' > conv_rpkm/{0}.transcript.bed".format(args.output), shell=True)
+    call("/bin/bedtools/bedtools sort -i conv_rpkm/{0}.transcript.bed > see".format(args.output), shell=True)
+    call("mv see conv_rpkm/{0}.transcript.bed".format(args.output), shell=True)
+    call("grep -v \"+\" conv_rpkm/{0}.transcript.bed > conv_rpkm/{0}.transcripts.minus.bed".format(args.output), shell=True)
+    call("grep \"+\" conv_rpkm/{0}.transcript.bed > conv_rpkm/{0}.transcripts.plus.bed".format(args.output), shell=True)
+    call("/bin/bedtools/bedtools multiinter -i conv_rpkm/{0}.transcripts.plus.bed conv_rpkm/{0}.transcripts.minus.bed |grep \"1,2\" |awk \'{{OFS=\"\\t\"}}{{ if ($3-$2>100){{print $1, $2, $3}} }}\' > conv_rpkm/{0}.transcripts.convergent.bed".format(args.output), shell=True)
     return
 
 def gmean_cal(args):
-    call("awk '{{OFS=\"\\t\"}}{{printf \"%s\\t%s\\t%s\\t%s_%s_%s\\t.\\t.\\n\", $1, $2, $3, $1, $2, $3}}' conv_rpkm/{0}.transcripts.convergent.bed > conv_rpkm/{0}.transcripts.convergent.6.bed".format(args.output))
-    call("/bin/samtools view alignment/{0}.pos.bam | gfold count -annf BED -ann conv_rpkm/{0}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{0}.pos.cnt".format(args.output))
-    call("/bin/samtools view alignment/{0}.neg.bam | gfold count -annf BED -ann conv_rpkm/{0}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{0}.neg.cnt".format(args.output))
+    call("awk '{{OFS=\"\\t\"}}{{printf \"%s\\t%s\\t%s\\t%s_%s_%s\\t.\\t.\\n\", $1, $2, $3, $1, $2, $3}}' conv_rpkm/{output}.transcripts.convergent.bed > conv_rpkm/{output}.transcripts.convergent.6.bed".format(**vars(args)), shell=True)
+    call("/bin/samtools view -@ {threads} alignment/{output}.pos.bam | gfold count -annf BED -ann conv_rpkm/{output}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{output}.pos.cnt".format(**vars(args)), shell=True)
+    call("/bin/samtools view -@ {threads} alignment/{output}.neg.bam | gfold count -annf BED -ann conv_rpkm/{output}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{output}.neg.cnt".format(**vars(args)), shell=True)
     #call("/bin/samtools view alignment/{0}.pos.bam | gfold count -annf BED -ann /adapter/researchers/nia/aseda/Alt46/mm9.transcript.longest.GROseq.bed -tag stdin -o conv_rpkm/{0}.pos3.cnt".format(args.output))
     #call("/bin/samtools view alignment/{0}.neg.bam | gfold count -annf BED -ann /adapter/researchers/nia/aseda/Alt46/mm9.transcript.REV.longest.GROseq.bed -tag stdin -o conv_rpkm/{0}.neg3.cnt".format(args.output))
-    call("python2 /bin/COVT.gmean_cal.py conv_rpkm/{0} > conv_rpkm/{0}.gmean.cnt".format(args.output))
-    call("sort -gr -k 4 conv_rpkm/{0}.gmean.cnt > conv_rpkm/{0}.gmean.cnt.sort".format(args.output))
-    call("python2 /bin/Add.col.py conv_rpkm/{0}.gmean.cnt.sort > conv_rpkm/{0}.gmean.bed".format(args.output))
+    call("python2 /bin/COVT.gmean_cal.py conv_rpkm/{output} > conv_rpkm/{output}.gmean.cnt".format(**vars(args)), shell=True)
+    call("sort -gr -k 4 conv_rpkm/{output}.gmean.cnt > conv_rpkm/{output}.gmean.cnt.sort".format(**vars(args)), shell=True)
+    call("python2 /bin/Add.col.py conv_rpkm/{output}.gmean.cnt.sort > conv_rpkm/{output}.gmean.bed".format(**vars(args)), shell=True)
     return
 
 def GROSeqPL(args):
@@ -92,11 +105,16 @@ def GROSeqPL(args):
     convergent(args)
     gmean_cal(args)
 
+
     # TODO: leave SAM file for debugging
     # call("rm -rf alignment/{0}.sam".format(args.output))
 
 def main():
     args = parse_args()
+
+    start = time.time()
     GROSeqPL(args)
+    end = time.time()
+    print("Total time: {:.1f} minutes".format((end - start)/60))
 
 main()
