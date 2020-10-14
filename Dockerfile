@@ -31,6 +31,8 @@ COPY dependencies/pysam-0.16.0.tar.gz $DESTINATION/pysam-0.16.0.tar.gz
 COPY dependencies/RSeQC-2.6.4.tar.gz $DESTINATION/RSeQC-2.6.4.tar.gz
 COPY dependencies/samtools-1.6.tar.bz2 $DESTINATION/samtools-1.6.tar.bz2
 COPY dependencies/six-1.15.0.tar.gz $DESTINATION/six-1.15.0.tar.gz
+COPY dependencies/requests-2.24.0.tar.gz $DESTINATION/requests-2.24.0.tar.gz
+COPY dependencies/tqdm-4.49.0.tar.gz $DESTINATION/tqdm-4.49.0.tar.gz
 COPY dependencies/wigToBigWig $DESTINATION/wigToBigWig
 COPY dependencies/bigWigToWig $DESTINATION/bigWigToWig
 
@@ -69,6 +71,20 @@ RUN cd $DESTINATION && \
     cd $DESTINATION && \
     rm -Rf pysam-0.16.0.tar.gz pysam-0.16.0
 
+# Install requests
+RUN cd $DESTINATION && \
+    tar xzf requests-2.24.0.tar.gz && \
+    cd requests-2.24.0 && python2 setup.py install && \
+    cd $DESTINATION && \
+    rm -Rf requests-2.24.0.tar.gz requests-2.24.0
+
+
+# Install tqdm
+RUN cd $DESTINATION && \
+    tar xzf tqdm-4.49.0.tar.gz && \
+    cd tqdm-4.49.0 && python2 setup.py install && \
+    cd $DESTINATION && \
+    rm -Rf tqdm-4.49.0.tar.gz tqdm-4.49.0
 
 # Install bowtie2
 RUN cd $DESTINATION && \
@@ -150,8 +166,17 @@ RUN apt-get remove -y \
  x11proto-core-dev x11proto-dev x11proto-scrnsaver-dev x11proto-xext-dev xtrans-dev libx11-dev && \
  apt-get autoremove -y && apt-get clean
 
-# Copy pipeline source files
-COPY src/*  $DESTINATION/
+# Copy pipeline source files. All files are mentioneded separately so that docker build is rerun when source code is changing
+COPY src/Add.col.py  $DESTINATION/Add.col.py
+COPY src/bam2bw.py  $DESTINATION/bam2bw.py
+COPY src/bam2wig.py  $DESTINATION/bam2wig.py
+COPY src/COVT.gmean_cal.py  $DESTINATION/COVT.gmean_cal.py
+COPY src/GROSeqPL_v3_updated.py  $DESTINATION/GROSeqPL_v3_updated.py
+COPY src/misc.py  $DESTINATION/misc.py
+
+# Copy preprocessing script into image
+COPY preprocess/download.py  $DESTINATION/download.py
+RUN echo '#!/bin/bash \n python2 /bin/download.py "$@"' > $DESTINATION/download; chmod 755 $DESTINATION/download
 
 WORKDIR /mount
 

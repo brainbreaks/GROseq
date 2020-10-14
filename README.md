@@ -1,38 +1,97 @@
-GRO-seq pipeline packege (Wei, Pei-Chi group; DKFZ)
+ GRO-seq pipeline package (Wei, Pei-Chi group; DKFZ)
 ====================================================
 Global Run-On Sequencing (GRO-Seq) pipeline for analyzing transcription activity of genes from engaged RNA polymerase. 
 
-Download required packages and files
--------------------
-To successfully build GRO-seq image first required libraries and files must be downloaded. This can be done by running 
-following command
-> python download.py
 
-Build docker image
--------------------
+Table of Contents
+=================
+
+  * Using GRO-seq docker image
+    * [Singularity](#singularity) 
+      * [Pull GRO-seq image from DockerHUB](#singularity-pull)
+      * [Run container](#singularity-run)
+    * [Docker](#docker) 
+      * [Pull GRO-seq image from DockerHUB](#docker-pull)
+      * [Run container](#docker-run)
+    * [Build GRO-seq docker image](#build) 
+      * [Download required packages and files](#build-download)
+      * [Build docker image](#build-build)
+
+
+<a name="singularity">Singularity</a>
+====================================================
+
+<a name="singularity-pull">Pull GRO-seq image from data server</a>
+----------------------------------------------------
+```console
+singularity pull docker://sandrejev/groseq:latest
+```
+
+<a name="singularity-run">Run container</a>
+----------------------------------------------------
+Before running GROseq pipeline you will need to obtain genome(fasta), bowtie index (*.bt2), chromosome sizes (*.chrom.sizes) and annotation. For mm9, mm10 and hg19 these can be downloaded automatically with `download` command. The only exception being
+annotation *.bed file.
+```console
+singularity exec --bind ${PWD}:/mount ./groseq_latest.sif download mm10
+```
+
+Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provided automatically)
+```console
+singularity exec --bind ${PWD}:/mount ./groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
+```
+
+
+
+
+<a name="docker">Docker</a>
+====================================================
+
+<a name="docker-pull">Pull GRO-seq image from DockerHUB</a>
+----------------------------------------------------
+```console
+docker pull sandrejev:groseq
+```
+
+<a name="docker-run">Run container</a>
+----------------------------------------------------
+Before running GROseq pipeline you will need to obtain genome(fasta), bowtie index (*.bt2), chromosome sizes (*.chrom.sizes) and annotation. For mm9, mm10 and hg19 these can be downloaded automatically with `download` command. The only exception being
+annotation *.bed file.
+```console
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint download groseq mm10
+```
+
+Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provided automatically)
+```console
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o AS-512172-LR-52456 --chromInfo mm10.chrom.sizes
+```
+
+<a name="docker-inspect">Inspect container</a>
+----------------------------------------------------
+```console
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint bash groseq
+```
+
+
+
+<a name="build">Building GRO-seq docker image</a>
+====================================================
+
+<a name="build-download">Download required packages and files</a>
+----------------------------------------------------
+To successfully build GRO-seq image first required libraries and files must be downloaded. This can be done by running following command
+```console
+python download.py
+```
+
+<a name="build-build">Build docker image</a>
+----------------------------------------------------
 To build Docker image you need to execute
-> docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t groseq .
+```console
+docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t groseq .
+```
 
-Import/Export docker image
-> docker save groseq > groseq.tar
-> docker load < groseq.tar
+Convert cached docker image to singularity (for local testing)
+```console
+singularity pull docker-daemon:groseq:latest
+```
 
-Run container
--------------------
-To run a container first put location of reference genome fasta file (genome.fa) and all of the bowtie2 index files (genome.*.bt2) into separate directory. You will need
-to reference them with -g parameter (e.g. ./mm10)
-Run container. Current directory will be accessible inside the container
-> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) --name groseq_test -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -g ./mm10 -o results --chromInfo mm10.chrom.sizes
-> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) --name <memorable_name> -it groseq -f ./path/to/sample -g ./path/to/genome -o ./path/to/results --chromInfo mm10.chrom.size
-
-Inspect container
--------------------
-> docker run -v ${PWD}:/mount -u 0:$(id -g ${USER}) -it --entrypoint bash groseq
-
- 
- 
- #>>> mkdir -p alignment conv_rpkm
-#docker run -v ${PWD}:/mount -u 0:$(id -u ${USER}) -it --entrypoint bash groseq
-#> docker run -v ${PWD}:/mount -u $(id -u ${USER}):$(id -g ${USER}) groseq -f SRR2820488_first100.fastq -g mm9 -o results.txt --chromInfo mm9.chrom.sizes
-#>
-#>/bin/homer/bin/makeTagDirectory

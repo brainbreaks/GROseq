@@ -1,5 +1,4 @@
 import tarfile
-import urllib
 import requests
 import argparse
 import zipfile
@@ -12,136 +11,123 @@ import glob
 
 
 def download_file(url, dest=None, description=None, overwrite=False):
-	if description is None:
-		description = 'Downloading file "{}" ==> "{}"...'.format(url, dest)
+    if description is None:
+        description = 'Downloading file "{}" ==> "{}"...'.format(url, dest)
 
-	if not overwrite and dest and os.path.isfile(dest):
-		print(description)
-		return dest
+    if not overwrite and dest and os.path.isfile(dest):
+        print(description)
+        return dest
 
-	if re.match("^(http|ftp)", url):
-		response = requests.get(url, stream=True)
-		total_size_in_bytes= int(response.headers.get('content-length', 0))
-		block_size = 1024 #1 Kibibyte
+    if re.match("^(http|ftp)", url):
+        response = requests.get(url, stream=True)
+        total_size_in_bytes= int(response.headers.get('content-length', 0))
+        block_size = 1024 #1 Kibibyte
 
-		progress_bar = tqdm.tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-		with tempfile.NamedTemporaryFile(mode="wb", delete=False) as file:
-			path = file.name
-			progress_bar.set_description(description)
-			for data in response.iter_content(block_size):
-				progress_bar.update(len(data))
-				file.write(data)
-			progress_bar.close()
-		if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-			print("ERROR, something went wrong")
-	else: # local file
-		tmp = tempfile.NamedTemporaryFile(delete=False)
-		tmp.close()
-		shutil.copy2(url, tmp.name)
-		path = tmp.name
+        progress_bar = tqdm.tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as file:
+            path = file.name
+            progress_bar.set_description(description)
+            for data in response.iter_content(block_size):
+                progress_bar.update(len(data))
+                file.write(data)
+            progress_bar.close()
+        if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+            print("ERROR, something went wrong")
+    else: # local file
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp.close()
+        shutil.copy2(url, tmp.name)
+        path = tmp.name
 
-	if dest:
-		shutil.copy2(path, dest)
-		path = dest
+    if dest:
+        shutil.copy2(path, dest)
+        path = dest
 
-	return path
+    return path
 
 
 
 def download_raw_genome(url, dest, overwrite=False):
-	if not overwrite and dest and os.path.isfile(dest):
-		print('Downloading raw genome "{}" ==> "{}". Already exists, skipping...'.format(url, dest))
-		return
+    if not overwrite and dest and os.path.isfile(dest):
+        print('Downloading raw genome "{}" ==> "{}". Already exists, skipping...'.format(url, dest))
+        return
 
-	path = download_file(url, description='Downloading raw genome "{}"\n'.format(url))
+    path = download_file(url, description='Downloading raw genome "{}"\n'.format(url))
 
-	dest_chromFa = "{}_{}".format(dest, "chromFa")
-	with tarfile.open(path, mode="r:gz") as tf:
-		progress_bar = tqdm.tqdm(tf.getmembers(), desc="Extracting raw genome archive contents into '{}'\n".format(dest_chromFa))
-		for member in progress_bar:
-			try:
-				tf.extract(member, dest_chromFa)
-			except tarfile.TarError as e:
-				pass
+    dest_chromFa = "{}_{}".format(dest, "chromFa")
+    with tarfile.open(path, mode="r:gz") as tf:
+        progress_bar = tqdm.tqdm(tf.getmembers(), desc="Extracting raw genome archive contents into '{}'\n".format(dest_chromFa))
+        for member in progress_bar:
+            try:
+                tf.extract(member, dest_chromFa)
+            except tarfile.TarError as e:
+                pass
 
-	print("Joining chromosomes into single fasta file '{}'\n".format(dest))
-	with open(dest, 'w') as outfile:
-		# Iterate through list
-		for names in glob.glob(os.path.join(dest_chromFa, "*")):
-			with open(names) as infile:
-				outfile.write(infile.read())
-			outfile.write("\n")
+    print("Joining chromosomes into single fasta file '{}'\n".format(dest))
+    with open(dest, 'w') as outfile:
+        # Iterate through list
+        for names in glob.glob(os.path.join(dest_chromFa, "*")):
+            with open(names) as infile:
+                outfile.write(infile.read())
+            outfile.write("\n")
 
-	shutil.rmtree(dest_chromFa)
+    shutil.rmtree(dest_chromFa)
 
 
 def download_bowtie2_index(url, dest, overwrite=False):
-	if not overwrite and dest and len(glob.glob(os.path.join(dest, "*.bt2"))) > 0:
-		print('Downloading bowtie2 index "{}" ==> "{}". Already exists, skipping...'.format(url, dest))
-		return
+    if not overwrite and dest and len(glob.glob(os.path.join(dest, "*.bt2"))) > 0:
+        print('Downloading bowtie2 index "{}" ==> "{}". Already exists, skipping...'.format(url, dest))
+        return
 
-	path = download_file(url, description="Downloading bowtie index '{}'\n".format(url))
+    path = download_file(url, description="Downloading bowtie index '{}'\n".format(url))
 
-	with zipfile.ZipFile(path, 'r') as zf:
-		for member in tqdm.tqdm(zf.infolist(), desc="Extracting bowtie2 index into '{}'\n".format(dest)):
-			try:
-				zf.extract(member, dest)
-			except zipfile.error as e:
-				pass
+    with zipfile.ZipFile(path, 'r') as zf:
+        for member in tqdm.tqdm(zf.infolist(), desc="Extracting bowtie2 index into '{}'\n".format(dest)):
+            try:
+                zf.extract(member, dest)
+            except zipfile.error as e:
+                pass
 
+def download_genome(genome, path):
+    download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/{genome}/bigZips/chromFa.tar.gz".format(genome=genome), os.path.join(path, "{genome}.fa".format(genome=genome)))
+    download_file("http://hgdownload.cse.ucsc.edu/goldenPath/{genome}/bigZips/{genome}.chrom.sizes".format(genome=genome), os.path.join(path, "{genome}.chrom.sizes".format(genome=genome)))
+    download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/{genome}.zip".format(genome=genome), path)
 
-def main():
+def download_dependencies(path):
+    # # Download libraries used in the pipeline
+    download_file("https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/bowtie2-2.2.9-linux-x86_64.zip", os.path.join(path, "bowtie2-2.2.9-linux-x86_64.zip"))
+    download_file("https://master.dl.sourceforge.net/project/samtools/samtools/1.6/samtools-1.6.tar.bz2", os.path.join(path, "samtools-1.6.tar.bz2"))
+    download_file("https://github.com/arq5x/bedtools2/releases/download/v2.29.1/bedtools-2.29.1.tar.gz", os.path.join(path, "bedtools-2.29.1.tar.gz"))
+    download_file("https://anaconda.org/bioconda/gfold/1.1.4/download/linux-64/gfold-1.1.4-gsl2.2_2.tar.bz2", os.path.join(path, "gfold-1.1.4-gsl2.2_2.tar.bz2"))
+    download_file("http://www.artfiles.org/gnu.org/gsl/gsl-2.2.1.tar.gz", os.path.join(path, "gsl-2.2.1.tar.gz"))
+    download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig", os.path.join(path, "wigToBigWig"))
+    download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigToWig", os.path.join(path, "bigWigToWig"))
+    download_file("https://github.com/bxlab/bx-python/archive/v0.8.9.tar.gz", os.path.join(path, "bx-python-0.8.9.tar.gz"))
+    download_file("https://netcologne.dl.sourceforge.net/project/rseqc/RSeQC-2.6.4.tar.gz", os.path.join(path, "RSeQC-2.6.4.tar.gz"))
+    download_file("https://github.com/numpy/numpy/releases/download/v1.16.6/numpy-1.16.6.tar.gz", os.path.join(path, "numpy-1.16.6.tar.gz"))
+    download_file("https://github.com/cython/cython/archive/0.29.19.tar.gz", os.path.join(path, "cython-0.29.19.tar.gz"))
+    download_file("https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/python-nose/nose-1.0.0%20(1).tar.gz", os.path.join(path, "nose-1.0.0.tar.gz"))
+    download_file("https://github.com/pysam-developers/pysam/archive/v0.16.0.tar.gz", os.path.join(path, "pysam-0.16.0.tar.gz"))
+    download_file("https://github.com/benjaminp/six/archive/1.15.0.tar.gz", os.path.join(path, "six-1.15.0.tar.gz"))
+    download_file("https://github.com/psf/requests/archive/v2.24.0.tar.gz", os.path.join(path, "requests-2.24.0.tar.gz"))
+    download_file("https://github.com/tqdm/tqdm/archive/v4.49.0.tar.gz", os.path.join(path, "tqdm-4.49.0.tar.gz"))
 
-	# This works
-	download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/mm9.zip", "data/mm9")
-	download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/mm10.zip", "data/mm10")
-	download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/hg19.zip", "data/hg19")
-
-	download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/chromFa.tar.gz", "data/mm9/mm9.fa")
-	download_file("http://hgdownload.cse.ucsc.edu/goldenPath/mm9/bigZips/mm9.chrom.sizes", "data/mm9/mm9.chrom.sizes")
-	download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/chromFa.tar.gz", "data/mm10/mm10.fa")
-	download_file("http://hgdownload.cse.ucsc.edu/goldenPath/mm10/bigZips/mm10.chrom.sizes", "data/mm10/mm10.chrom.sizes")
-	download_raw_genome("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz", "data/hg19/hg19.fa")
-	download_file("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes", "data/hg19/hg19.chrom.sizes")
-
-	# Homer packages
-	# download_file("http://homer.ucsd.edu/homer/configureHomer.pl", "data/dependencies/homer/configureHomer.pl")
-	# download_file("http://homer.ucsd.edu/homer/data/software/homer.v4.11.1.zip", "data/dependencies/homer/homer.v4.11.1.zip")
-	# download_file("http://homer.ucsd.edu/homer/data/genomes/hg19.v6.4.zip", "data/dependencies/homer/hg19.v6.4.zip")
-	# download_file("http://homer.ucsd.edu/homer/data/genomes/mm9.v6.4.zip", "data/dependencies/homer/mm9.v6.4.zip")
-	# download_file("http://homer.ucsd.edu/homer/data/genomes/mm10.v6.4.zip", "data/dependencies/homer/mm10.v6.4.zip")
-	# download_file("http://homer.ucsd.edu/homer/data/organisms/human.v6.3.zip", "data/dependencies/homer/human.v6.3.zip")
-	# download_file("http://homer.ucsd.edu/homer/data/organisms/mouse.v6.3.zip", "data/dependencies/homer/mouse.v6.3.zip")
-
-	# # Download libraries used in the pipeline
-	download_file("https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/bowtie2-2.2.9-linux-x86_64.zip", "dependencies/bowtie2-2.2.9-linux-x86_64.zip")
-	download_file("https://master.dl.sourceforge.net/project/samtools/samtools/1.6/samtools-1.6.tar.bz2", "dependencies/samtools-1.6.tar.bz2")
-	download_file("https://github.com/arq5x/bedtools2/releases/download/v2.29.1/bedtools-2.29.1.tar.gz", "dependencies/bedtools-2.29.1.tar.gz")
-	download_file("https://anaconda.org/bioconda/gfold/1.1.4/download/linux-64/gfold-1.1.4-gsl2.2_2.tar.bz2", "dependencies/gfold-1.1.4-gsl2.2_2.tar.bz2")
-	download_file("http://www.artfiles.org/gnu.org/gsl/gsl-2.2.1.tar.gz", "dependencies/gsl-2.2.1.tar.gz")
-	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig", "dependencies/wigToBigWig")
-	download_file("http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bigWigToWig", "dependencies/bigWigToWig")
-	download_file("https://github.com/bxlab/bx-python/archive/v0.8.9.tar.gz", "dependencies/bx-python-0.8.9.tar.gz")
-	download_file("https://netcologne.dl.sourceforge.net/project/rseqc/RSeQC-2.6.4.tar.gz", "dependencies/RSeQC-2.6.4.tar.gz")
-	download_file("https://github.com/numpy/numpy/releases/download/v1.16.6/numpy-1.16.6.tar.gz", "dependencies/numpy-1.16.6.tar.gz")
-	download_file("https://github.com/cython/cython/archive/0.29.19.tar.gz", "dependencies/cython-0.29.19.tar.gz")
-	download_file("https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/python-nose/nose-1.0.0%20(1).tar.gz", "dependencies/nose-1.0.0.tar.gz")
-	download_file("https://github.com/pysam-developers/pysam/archive/v0.16.0.tar.gz", "dependencies/pysam-0.16.0.tar.gz")
-	download_file("https://github.com/benjaminp/six/archive/1.15.0.tar.gz", "dependencies/six-1.15.0.tar.gz")
-
-
-
-
-
-
-
-	if os.path.exists("data/homer2"):
-		print("HOMER is already downloaded")
-	else:
-		print("Download HOMER...")
-		os.system("mkdir -p data/homer2; cd data/homer2; wget http://homer.ucsd.edu/homer/configureHomer.pl; perl configureHomer.pl -install homer mm9 mm10 hg19; cd cpp; make clean ")
-
-	return
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Download groseq dependencies')
+    parser.add_argument('data', choices=['mm9', 'mm10', 'hg19', 'dependencies'], help="""Should be one of the following: \n
+    mm9 - mm9 model files\n  
+    mm10 - mm10 model files\n
+    hg19 - hg19 model files\n
+    dependencies - (to download libraries needed for the pipeline when building docker image)""")
+    parser.add_argument('path', default=".", help="Path where the files will be downloaded (default: current directory)")
+
+    args = parser.parse_args()
+
+    if not os.path.exists(args.path):
+        os.makedirs(args.path)
+
+    if args.data == "dependencies":
+        download_dependencies(args.path)
+    else:
+        download_genome(args.data, args.path)

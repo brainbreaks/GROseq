@@ -62,11 +62,9 @@ def parseFILE(args):
         fout.close()
         call('wigToBigWig -clip %s.2.wig %s %s.bw' % (prefix_neg, genomefile, prefix_neg))
 
-        #call('rm -rf %s.bam* %s.bam*' % (prefix_pos, prefix_neg))
-
-        # TODO: Leave wig file for debugging
-        # call('rm -rf %s.wig %s.wig' % (prefix_pos, prefix_neg))
-        # call('rm -rf %s.2.wig' % (prefix_neg))
+        call('rm -rf %s.bam* %s.bam*' % (prefix_pos, prefix_neg))
+        call('rm -rf %s.wig %s.wig' % (prefix_pos, prefix_neg))
+        call('rm -rf %s.2.wig' % (prefix_neg))
 
 def main():
     args = parse_args()
