@@ -10,13 +10,34 @@ ENV MAKEFLAGS='-j 32'
 
 # Install required standard libraries
 RUN http_proxy="${http_proxy}" https_proxy="${https_proxy}" apt-get update
-RUN http_proxy="${http_proxy}" https_proxy="${https_proxy}" apt-get install make gcc gfortran g++ perl \
+RUN http_proxy="${http_proxy}" https_proxy="${https_proxy}" apt-get install \
+    locales locales-all \
+    make gcc gfortran g++ perl \
     ca-certificates ghostscript \
     zip unzip wget mime-support \
     libopenblas-base libopenblas-dev liblapack-dev liblapack-dev \
     libncurses6 libncursesw6 libncurses-dev \
     zlib1g-dev bzip2 libbz2-dev liblzma-dev -y && \
-    apt-get clean ;
+    apt-get clean && \
+    locale-gen en_US.UTF-8 && \
+    dpkg-reconfigure locales
+
+ENV LANG=en_US.UTF-8
+ENV LC_ADDRESS=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LC_COLLATE=en_US.UTF-8
+ENV LC_CTYPE=en_US.UTF-8
+ENV LC_IDENTIFICATION=en_US.UTF-8
+ENV LC_MEASUREMENT=en_US.UTF-8
+ENV LC_MESSAGES=en_US.UTF-8
+ENV LC_MONETARY=en_US.UTF-8
+ENV LC_NAME=en_US.UTF-8
+ENV LC_NUMERIC=en_US.UTF-8
+ENV LC_PAPER=en_US.UTF-8
+ENV LC_TELEPHONE=en_US.UTF-8
+ENV LC_TIME=en_US.UTF-8
+
+
 
 # Copy dependencies into docker image
 COPY dependencies/bedtools-2.29.1.tar.gz $DESTINATION/bedtools-2.29.1.tar.gz

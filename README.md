@@ -10,9 +10,11 @@ Table of Contents
     * [Singularity](#singularity) 
       * [Pull GRO-seq image from DockerHUB](#singularity-pull)
       * [Run container](#singularity-run)
+      * [Inspect container](#singularity-inspect)
     * [Docker](#docker) 
       * [Pull GRO-seq image from DockerHUB](#docker-pull)
       * [Run container](#docker-run)
+      * [Inspect container](#docker-inspect)
     * [Build GRO-seq docker image](#build) 
       * [Download required packages and files](#build-download)
       * [Build docker image](#build-build)
@@ -40,6 +42,11 @@ Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provide
 singularity exec --bind ${PWD}:/mount ./groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
 ```
 
+<a name="singularity-inspect">Inspect container</a>
+----------------------------------------------------
+```console
+singularity shell --bind ${PWD}:/mount ./groseq_latest.sif
+```
 
 
 
@@ -70,7 +77,6 @@ docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f A
 ```console
 docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint bash groseq
 ```
-
 
 
 <a name="build">Building GRO-seq docker image</a>
