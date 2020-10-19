@@ -199,6 +199,11 @@ COPY src/misc.py  $DESTINATION/misc.py
 COPY preprocess/download.py  $DESTINATION/download.py
 RUN echo '#!/bin/bash \n python2 /bin/download.py "$@"' > $DESTINATION/download; chmod 755 $DESTINATION/download
 
+# Copy LSF script into image
+COPY preprocess/lsf.py  $DESTINATION/lsf.py
+RUN echo '#!/bin/bash \n python2 /bin/lsf.py "$@"' > $DESTINATION/lsf; chmod 755 $DESTINATION/lsf
+
+
 WORKDIR /mount
 
 ENTRYPOINT ["groseq"]
