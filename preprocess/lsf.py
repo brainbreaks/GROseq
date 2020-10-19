@@ -22,15 +22,14 @@ fasta_files = list(find_files(".", r'^.*\.fastq$'))
 if args.pattern is not None:
     fasta_files = [f for f in fasta_files if re.search(args.pattern, f)]
 
-runtime_limit = 50 * len(fasta_files)
+runtime_limit = 240 * len(fasta_files)
 
 bsub_script = """#!/usr/bin/python -u
-#BSUB -J GROseq.{tag}[1-{fasta_files_n}]%4
+#BSUB -J GROseq.{tag}[1-{fasta_files_n}]%2
 #BSUB -W {runtime_limit}
 #BSUB -R "rusage[mem=8GB]"
 #BSUB -R "span[hosts=1]"
-#BSUB -R "order[slots]"
-#BSUB -n 56
+#BSUB -n 12,24
 #BSUB -e lsf_output.%J.%I.err
 #BSUB -o lsf_output.%J.%I.out
 
@@ -53,7 +52,7 @@ output_exists = os.path.isfile("conv_rpkm/{{output}}.gmean.bed".format(output=ou
 cmd = 'singularity exec --bind {{pwd}}:/mount ./groseq_latest.sif groseq --threads {{threads}} -f {{fasta}} -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o {{output}} --chromInfo mm10.chrom.sizes'.format(pwd=os.getcwd(), fasta=fasta, output=output, threads=len(job_hosts))
 
 print("Running {{job_name}} ({{job_id}}:{{job_index}})...".format(job_name=os.environ.get('LSB_JOBNAME'), job_id=os.environ.get('LSB_JOBID'), job_index=job_index))
-print("Hosts: " + ", ".join(set(job_hosts)))
+print("Host: " + ", ".join(set(job_hosts)))
 print("Available CPU: " + str(len(job_hosts)))
 print("Sample: " + sample)
 print("Output: {{output}} (exists: {{exists}})".format(output=output, exists="yes" if output_exists else "no"))
