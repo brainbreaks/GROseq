@@ -18,7 +18,8 @@ Table of Contents
     * [Build GRO-seq docker image](#build) 
       * [Download required packages and files](#build-download)
       * [Build docker image](#build-build)
-
+      * [Push docker image to Docker HUB](#build-build)
+      * [Convert cached docker image to singularity (for local testing)](#build-convert)
 
 <a name="singularity">Singularity</a>
 ====================================================
@@ -34,21 +35,29 @@ singularity pull docker://sandrejev/groseq:latest
 Before running GROseq pipeline you will need to obtain genome(fasta), bowtie index (*.bt2), chromosome sizes (*.chrom.sizes) and annotation. For mm9, mm10 and hg19 these can be downloaded automatically with `download` command. The only exception being
 annotation *.bed file.
 ```console
-singularity exec ./groseq_latest.sif download mm10
+singularity exec groseq_latest.sif download mm10
 ```
 
 Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provided automatically)
 ```console
-singularity exec ./groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
+singularity exec groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
 ```
+
+For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster 
+```console
+# Run GRO-seq pipeline on all *.fastq files in the folder
+singularity exec groseq_latest.sif lsf | bsub
+
+# Run GRO-seq pipeline on all *.fastq files in the folder that match the pattern. Additionaly prefix the results with tag PREFIX
+singularity exec groseq_latest.sif lsf PREFIX --pattern "AS-512178" | bsub 
+```
+
 
 <a name="singularity-inspect">Inspect container</a>
 ----------------------------------------------------
 ```console
-singularity shell ./groseq_latest.sif
+singularity shell groseq_latest.sif
 ```
-
-
 
 <a name="docker">Docker</a>
 ====================================================
@@ -72,12 +81,21 @@ Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provide
 docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o AS-512172-LR-52456 --chromInfo mm10.chrom.sizes
 ```
 
+
+For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster.
+```console
+# Run GRO-seq pipeline on all *.fastq files in the folder
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint lsf groseq | bsub
+
+# Run GRO-seq pipeline on all *.fastq files in the folder that match the pattern. Additionaly prefix the results with tag PREFIX
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint lsf groseq PREFIX --pattern "AS-512178" | bsub 
+```
+
 <a name="docker-inspect">Inspect container</a>
 ----------------------------------------------------
 ```console
 docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint bash groseq
 ```
-
 
 <a name="build">Building GRO-seq docker image</a>
 ====================================================
@@ -86,23 +104,25 @@ docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoin
 ----------------------------------------------------
 To successfully build GRO-seq image first required libraries and files must be downloaded. This can be done by running following command
 ```console
-python download.py
+python download.py dependencies
 ```
 
 <a name="build-build">Build docker image</a>
 ----------------------------------------------------
 To build Docker image you need to execute
 ```console
-docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t groseq .
+docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t sandrejev/groseq:latest .
 ```
 
-Push docker image to Docker HUB
+<a name="build-push">Push docker image to Docker HUB</a>
+----------------------------------------------------
+```console
+docker login
+docker push sandrejev/groseq:latest
+```
+
+<a name="build-convert">Convert cached docker image to singularity (for local testing)</a>
+----------------------------------------------------
 ```console
 singularity pull docker-daemon:groseq:latest
 ```
-
-Convert cached docker image to singularity (for local testing)
-```console
-singularity pull docker-daemon:groseq:latest
-```
-
