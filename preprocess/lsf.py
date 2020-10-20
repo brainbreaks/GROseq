@@ -1,6 +1,7 @@
 #!/usr/bin/python -u
 import os
 import re
+import sys
 import json
 import math
 import argparse
@@ -30,7 +31,22 @@ if args.pattern is not None:
 max_slots = args.max_slots
 fasta_sizes = [os.path.getsize(f)/1073741824. for f in fasta_files]
 memory_limit = int(math.ceil(1.5*sum(sorted(fasta_sizes, reverse=True)[:1]) + 4))
-runtime_limit = sum(fasta_sizes)*15
+runtime_limit = int(math.ceil(sum(fasta_sizes)*15))
+
+
+prefix = tag+"_" if tag != "no-tag" else ""
+
+any_output_exists = False
+for fasta in fasta_files:
+    output = prefix + re.sub(r"\.fastq$", "", os.path.basename(fasta))
+    output_file = "conv_rpkm/{output}.gmean.bed".format(output=output)
+    if os.path.isfile(output_file):
+        sys.stderr.write("!!!! OUTPUT '{output}' EXISTS ({output_file}), not executing !!!! Try using --overwrite argument or specify a different tag!".format(output=output, output_file=output_file))
+        any_output_exists = True
+
+if any_output_exists and not args.overwrite:
+    exit(2)
+
 
 bsub_script = """#!/usr/bin/python -u
 #BSUB -J groseq-{tag}[1-{fasta_files_n}]%{max_slots}
