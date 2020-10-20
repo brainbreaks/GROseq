@@ -126,3 +126,5 @@ docker push sandrejev/groseq:latest
 ```console
 singularity pull docker-daemon:groseq:latest
 ```
+
+.
