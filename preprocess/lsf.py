@@ -77,10 +77,11 @@ output = prefix + sample
 output_exists = os.path.isfile("conv_rpkm/{{output}}.gmean.bed".format(output=output))
 expected_time1 = os.path.getsize(fasta)/1073741824*7
 expected_time2 = os.path.getsize(fasta)/1073741824*9
-cmd = 'singularity exec --bind {{pwd}}:/mount ./groseq_latest.sif groseq --threads {{threads}} -f {{fasta}} -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o {{output}} --chromInfo mm10.chrom.sizes'.format(pwd=os.getcwd(), fasta=fasta, output=output, threads=len(job_hosts))
+cmd = 'singularity exec groseq_latest.sif groseq --threads {{threads}} -f {{fasta}} -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o {{output}} --chromInfo mm10.chrom.sizes'.format(pwd=os.getcwd(), fasta=fasta, output=output, threads=len(job_hosts))
 
 print("Running {{job_name}} ({{job_id}}:{{job_index}})...".format(job_name=os.environ.get('LSB_JOBNAME'), job_id=os.environ.get('LSB_JOBID'), job_index=job_index))
 print("Host: " + ", ".join(set(job_hosts)))
+print("Working directory: " + os.getcwd())
 print("Available CPU: " + str(len(job_hosts)))
 print("Sample: " + sample)
 print("Output: {{output}} (exists: {{exists}})".format(output=output, exists="yes" if output_exists else "no"))
