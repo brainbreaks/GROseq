@@ -22,12 +22,18 @@ fasta_files = list(find_files(".", r'^.*\.fastq$'))
 if args.pattern is not None:
     fasta_files = [f for f in fasta_files if re.search(args.pattern, f)]
 
-runtime_limit = 240 * len(fasta_files)
+#
+# Calculate optimal resource requirements
+#
+max_slots = 4
+fasta_sizes = [os.path.getsize(f)/1073741824 for f in fasta_files]
+memory_limit = sum(sorted(fasta_sizes, reverse=True)[:max_slots])
+runtime_limit = sum(fasta_sizes)*15
 
 bsub_script = """#!/usr/bin/python -u
-#BSUB -J GROseq.{tag}[1-{fasta_files_n}]%2
+#BSUB -J GROseq.{tag}[1-{fasta_files_n}]%{max_slots}
 #BSUB -W {runtime_limit}
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem={memory_limit}GB]"
 #BSUB -R "span[hosts=1]"
 #BSUB -n 12,24
 #BSUB -e lsf_output.%J.%I.err
@@ -56,6 +62,7 @@ print("Host: " + ", ".join(set(job_hosts)))
 print("Available CPU: " + str(len(job_hosts)))
 print("Sample: " + sample)
 print("Output: {{output}} (exists: {{exists}})".format(output=output, exists="yes" if output_exists else "no"))
+print("Expected time: {{expected_time1}} - {{expected_time2}}  minutes".format(expected_time1=os.path.getsize(fasta)/1073741824*7, expected_time2=os.path.getsize(fasta)/1073741824*9))
 print('> ' + cmd)
 
 if not overwrite and output_exists:
@@ -67,4 +74,6 @@ else:
 """
 
 print(bsub_script.format(fasta_files_n=len(fasta_files), fasta_files=json.dumps(fasta_files),
-                         runtime_limit=runtime_limit, tag=tag, overwrite=args.overwrite))
+                         runtime_limit=runtime_limit,
+                         memory_limit=memory_limit,
+                         tag=tag, overwrite=args.overwrite, max_slots=max_slots))
