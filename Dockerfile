@@ -54,6 +54,9 @@ COPY dependencies/samtools-1.6.tar.bz2 $DESTINATION/samtools-1.6.tar.bz2
 COPY dependencies/six-1.15.0.tar.gz $DESTINATION/six-1.15.0.tar.gz
 COPY dependencies/requests-2.24.0.tar.gz $DESTINATION/requests-2.24.0.tar.gz
 COPY dependencies/tqdm-4.49.0.tar.gz $DESTINATION/tqdm-4.49.0.tar.gz
+COPY dependencies/pydevtools-0.8.0.tar.gz $DESTINATION/pydevtools-0.8.0.tar.gz
+COPY dependencies/pandas-0.24.2.tar.gz $DESTINATION/pandas-0.24.2.tar.gz
+COPY dependencies/dateutil-2.8.1.tar.gz $DESTINATION/dateutil-2.8.1.tar.gz
 COPY dependencies/wigToBigWig $DESTINATION/wigToBigWig
 COPY dependencies/bigWigToWig $DESTINATION/bigWigToWig
 
@@ -161,6 +164,32 @@ RUN cd $DESTINATION && \
     cd $DESTINATION && \
     rm -Rf gsl-2.2.1.tar.gz gsl-2.2.1
 
+
+# Install dateutil 2.8.1
+RUN cd $DESTINATION && \
+    tar xzf dateutil-2.8.1.tar.gz && \
+    cd python-dateutil-2.8.1 && python2 setup.py install  && \
+    cd $DESTINATION && \
+    rm -Rf dateutil-2.8.1.tar.gz python-dateutil-2.8.1
+
+# Install pandas 0.24.2
+RUN cd $DESTINATION && \
+    tar xzf pandas-0.24.2.tar.gz && \
+    cd pandas-0.24.2 && python2 setup.py install  && \
+    cd $DESTINATION && \
+    rm -Rf pandas-0.24.2.tar.gz pandas-0.24.2
+
+
+# Install pybedtools 0.8.0
+RUN cd $DESTINATION && \
+    tar xzf pydevtools-0.8.0.tar.gz && \
+    cd pybedtools-0.8.0 && python2 setup.py cythonize && python2 setup.py install && \
+    ldconfig && \
+    cd $DESTINATION && \
+    rm -Rf pydevtools-0.8.0.tar.gz pydevtools-0.8.0
+
+
+
 # Install bigWigToWig and wigToBigWig from bigWig
 RUN chmod 755 $DESTINATION/bigWigToWig $DESTINATION/wigToBigWig
 
@@ -202,6 +231,10 @@ RUN echo '#!/bin/bash \n python2 /bin/download.py "$@"' > $DESTINATION/download;
 # Copy LSF script into image
 COPY preprocess/lsf.py  $DESTINATION/lsf.py
 RUN echo '#!/bin/bash \n python2 /bin/lsf.py "$@"' > $DESTINATION/lsf; chmod 755 $DESTINATION/lsf
+
+# Copy LSF script into image
+COPY preprocess/gff_longest_transcript.py  $DESTINATION/gff_longest_transcript.py
+RUN echo '#!/bin/bash \n python2 /bin/gff_longest_transcript.py "$@"' > $DESTINATION/longest-transcript; chmod 755 $DESTINATION/longest-transcript
 
 
 WORKDIR /mount

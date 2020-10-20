@@ -38,9 +38,14 @@ annotation *.bed file.
 singularity exec groseq_latest.sif download mm10
 ```
 
-Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provided automatically)
+Run groseq pipeline. Keep in mind that annotation file (`-a` flag) is created automatically for you from geneRef.gtf
 ```console
-singularity exec groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
+singularity exec groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
+```
+
+You can create annotation file with different clipping at the start or end of the transcript using `longest-transcript` command
+```console
+singularity exec groseq_latest.sif longest-transcript groseq mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
 ```
 
 For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster 
@@ -76,10 +81,16 @@ annotation *.bed file.
 docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint download groseq mm10
 ```
 
-Run groseq pipeline. Keep in mind that annotation file (`-a` flag is not provided automatically)
+Run groseq pipeline. Keep in mind that annotation file (`-a` flag) is created automatically for you from geneRef.gtf
 ```console
-docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.longest_transcripts.bed -g ./mm10 -o AS-512172-LR-52456 --chromInfo mm10.chrom.sizes
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.bed -g ./mm10 -o AS-512172-LR-52456 --chromInfo mm10.chrom.sizes
 ```
+
+You can create annotation file with different clipping at the start or end of the transcript using `longest-transcript` command
+```console
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint longest-transcript groseq --clip-start=50
+```
+
 
 
 For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster.

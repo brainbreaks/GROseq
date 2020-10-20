@@ -8,7 +8,7 @@ import re
 import shutil
 import os
 import glob
-
+from gff_longest_transcript import find_longest_transcript
 
 def download_file(url, dest=None, description=None, overwrite=False):
     if description is None:
@@ -93,6 +93,10 @@ def download_genome(genome, path):
     download_file("http://hgdownload.cse.ucsc.edu/goldenPath/{genome}/bigZips/{genome}.chrom.sizes".format(genome=genome), os.path.join(path, "{genome}.chrom.sizes".format(genome=genome)))
     download_bowtie2_index("https://genome-idx.s3.amazonaws.com/bt/{genome}.zip".format(genome=genome), path)
 
+    download_file("http://hgdownload.cse.ucsc.edu/goldenPath/{genome}/bigZips/genes/{genome}.refGene.gtf.gz".format(genome=genome), os.path.join(path, "{genome}.refGene.gtf.gz".format(genome=genome)))
+    find_longest_transcript(os.path.join(path, "{genome}.refGene.gtf.gz".format(genome=genome)), os.path.join(path, "{genome}.refGene.bed".format(genome=genome)), clip_start=50, clip_strand_specific=True)
+
+
 def download_dependencies(path):
     # # Download libraries used in the pipeline
     download_file("https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/bowtie2-2.2.9-linux-x86_64.zip", os.path.join(path, "bowtie2-2.2.9-linux-x86_64.zip"))
@@ -111,14 +115,20 @@ def download_dependencies(path):
     download_file("https://github.com/benjaminp/six/archive/1.15.0.tar.gz", os.path.join(path, "six-1.15.0.tar.gz"))
     download_file("https://github.com/psf/requests/archive/v2.24.0.tar.gz", os.path.join(path, "requests-2.24.0.tar.gz"))
     download_file("https://github.com/tqdm/tqdm/archive/v4.49.0.tar.gz", os.path.join(path, "tqdm-4.49.0.tar.gz"))
+    download_file("https://github.com/daler/pybedtools/archive/v0.8.0.tar.gz", os.path.join(path, "pydevtools-0.8.0.tar.gz"))
+    download_file("https://github.com/pandas-dev/pandas/archive/v0.24.2.tar.gz", os.path.join(path, "pandas-0.24.2.tar.gz"))
+    download_file("https://github.com/dateutil/dateutil/releases/download/2.8.1/python-dateutil-2.8.1.tar.gz", os.path.join(path, "dateutil-2.8.1.tar.gz"))
+
+    #download_file("https://github.com/stub42/pytz/archive/release_2020.1.tar.gz", os.path.join(path, "pytz-2020.1.tar.gz"))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download groseq dependencies')
-    parser.add_argument('data', choices=['mm9', 'mm10', 'hg19', 'dependencies'], help="""Should be one of the following: \n
+    parser.add_argument('data', choices=['mm9', 'mm10', 'hg19', 'hg38', 'dependencies'], help="""Should be one of the following: \n
     mm9 - mm9 model files\n  
     mm10 - mm10 model files\n
     hg19 - hg19 model files\n
+    hg38 - hg38 model files\n
     dependencies - (to download libraries needed for the pipeline when building docker image)""")
     parser.add_argument('path', default=".", help="Path where the files will be downloaded (default: current directory)")
 
