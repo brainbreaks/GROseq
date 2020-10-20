@@ -41,7 +41,7 @@ for fasta in fasta_files:
     output = prefix + re.sub(r"\.fastq$", "", os.path.basename(fasta))
     output_file = "conv_rpkm/{output}.gmean.bed".format(output=output)
     if os.path.isfile(output_file):
-        sys.stderr.write("!!!! OUTPUT '{output}' EXISTS ({output_file}), not executing !!!! Try using --overwrite argument or specify a different tag!".format(output=output, output_file=output_file))
+        sys.stderr.write("!!!! OUTPUT '{output}' EXISTS ({output_file}), NOT EXECUTING !!!!\nTry using --overwrite argument or specify a different tag!\n".format(output=output, output_file=output_file))
         any_output_exists = True
 
 if any_output_exists and not args.overwrite:
