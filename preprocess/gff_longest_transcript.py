@@ -13,7 +13,6 @@ def filter_transcript(feature):
 
 def find_longest_transcript(input, output, clip_start=0, clip_end=0, clip_strand_specific=False, output_strand_specific=False):
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    print(tmp_file.name)
 
     # Load GFF file
     annotations = BedTool(input)
@@ -29,12 +28,6 @@ def find_longest_transcript(input, output, clip_start=0, clip_end=0, clip_strand
     transcripts_longest = transcripts.loc[transcripts.reset_index().groupby(['name'])['length'].idxmax()].\
         drop(['length'], axis=1)
 
-    # Notify about genes with negative length
-    transcripts_negative_length = transcripts_longest.query("start >= end").name.values
-    if len(transcripts_negative_length) > 0:
-        transcripts_longest = transcripts_longest.query("end > start")
-        print("Removing transcripts with negative length from the output file: {}".format(", ".join(transcripts_negative_length)))
-
     # Clip at the end or the beginning of the gene (can be strand specific)
     pos_strand = (transcripts_longest["strand"] == "+").values | np.invert(clip_strand_specific)
     if clip_start > 0:
@@ -43,6 +36,12 @@ def find_longest_transcript(input, output, clip_start=0, clip_end=0, clip_strand
     if clip_end > 0:
         transcripts_longest.loc[pos_strand,"end"] = transcripts_longest.loc[pos_strand,"end"] - clip_end
         transcripts_longest.loc[~pos_strand,"start"] = transcripts_longest.loc[~pos_strand,"start"] + clip_start
+
+    # Notify about genes with negative length
+    transcripts_negative_length = transcripts_longest.query("start >= end").name.values
+    if len(transcripts_negative_length) > 0:
+        transcripts_longest = transcripts_longest.query("end > start")
+        print("Removing transcripts with negative length from the output file: {}".format(", ".join(transcripts_negative_length)))
 
     # make a copy of genes and reverse strand
     transcripts_longest_reversed = transcripts_longest.copy()

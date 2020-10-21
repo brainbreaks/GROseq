@@ -35,26 +35,26 @@ singularity pull docker://sandrejev/groseq:latest
 Before running GROseq pipeline you will need to obtain genome(fasta), bowtie index (*.bt2), chromosome sizes (*.chrom.sizes) and annotation. For mm9, mm10 and hg19 these can be downloaded automatically with `download` command. The only exception being
 annotation *.bed file.
 ```console
-singularity exec groseq_latest.sif download mm10
+singularity exec -B `pwd` groseq_latest.sif download mm10
 ```
 
 Run groseq pipeline. Keep in mind that annotation file (`-a` flag) is created automatically for you from geneRef.gtf
 ```console
-singularity exec groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
+singularity exec -B `pwd` groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/AS-512172-LR-52456_R1.fastq -a mm10.refGene.bed -g ./mm10 -o "singularity1" --chromInfo mm10.chrom.sizes
 ```
 
 You can create annotation file with different clipping at the start or end of the transcript using `longest-transcript` command
 ```console
-singularity exec groseq_latest.sif longest-transcript groseq mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
+singularity exec -B `pwd` groseq_latest.sif longest-transcript groseq mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
 ```
 
 For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster 
 ```console
 # Run GRO-seq pipeline on all *.fastq files in the folder
-singularity exec groseq_latest.sif lsf | bsub
+singularity exec -B `pwd` groseq_latest.sif lsf | bsub
 
 # Run GRO-seq pipeline on all *.fastq files in the folder that match the pattern. Additionaly prefix the results with tag PREFIX
-singularity exec groseq_latest.sif lsf PREFIX --pattern "AS-512178" | bsub 
+singularity exec -B `pwd` groseq_latest.sif lsf PREFIX --pattern "AS-512178" | bsub 
 ```
 
 
@@ -135,5 +135,5 @@ docker push sandrejev/groseq:latest
 <a name="build-convert">Convert cached docker image to singularity (for local testing)</a>
 ----------------------------------------------------
 ```console
-singularity pull docker-daemon:groseq:latest
+singularity pull docker-daemon:sandrejev/groseq:latest
 ```

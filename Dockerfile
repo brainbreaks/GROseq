@@ -232,10 +232,12 @@ RUN echo '#!/bin/bash \n python2 /bin/download.py "$@"' > $DESTINATION/download;
 COPY preprocess/lsf.py  $DESTINATION/lsf.py
 RUN echo '#!/bin/bash \n python2 /bin/lsf.py "$@"' > $DESTINATION/lsf; chmod 755 $DESTINATION/lsf
 
+
 # Copy LSF script into image
 COPY preprocess/gff_longest_transcript.py  $DESTINATION/gff_longest_transcript.py
 RUN echo '#!/bin/bash \n python2 /bin/gff_longest_transcript.py "$@"' > $DESTINATION/longest-transcript; chmod 755 $DESTINATION/longest-transcript
 
+ENV PATH="/bin/bedtools:${PATH}"
 
 WORKDIR /mount
 
