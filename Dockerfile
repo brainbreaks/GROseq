@@ -12,7 +12,7 @@ ENV MAKEFLAGS='-j 32'
 RUN http_proxy="${http_proxy}" https_proxy="${https_proxy}" apt-get update
 RUN http_proxy="${http_proxy}" https_proxy="${https_proxy}" apt-get install \
     locales locales-all \
-    make gcc gfortran g++ perl \
+    make gcc gfortran g++ perl libcurl4-openssl-dev \
     ca-certificates ghostscript \
     zip unzip wget mime-support \
     libopenblas-base libopenblas-dev liblapack-dev liblapack-dev \
@@ -206,7 +206,7 @@ RUN mkdir $DESTINATION/homer && \
 # Remove unused packages (TODO: can probably remove more)
 RUN apt-get remove -y \
  libcairo2-dev \
- ca-certificates zip unzip git wget libcurl4-openssl-dev \
+ ca-certificates zip unzip git wget \
  tcl-dev tcl8.6-dev tk-dev tk8.6-dev tcl tcl8.6 tk tk8.6 \
  zlib1g-dev libbz2-dev liblzma-dev libbz2-dev \
  libjbig-dev libjpeg-dev libjpeg62-turbo-dev libpng-dev \

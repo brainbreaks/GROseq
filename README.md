@@ -122,7 +122,7 @@ python download.py dependencies
 ----------------------------------------------------
 To build Docker image you need to execute
 ```console
-docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t sandrejev/groseq:latest .
+docker build --squash --build-arg http_proxy="http://www.inet.dkfz-heidelberg.de:80" --build-arg https_proxy="http://www.inet.dkfz-heidelberg.de:80" --rm -t sandrejev/groseq:latest .
 ```
 
 <a name="build-push">Push docker image to Docker HUB</a>

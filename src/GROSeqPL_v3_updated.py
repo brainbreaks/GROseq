@@ -1,9 +1,13 @@
-import sys, os
+import sys, os, os.path
 import argparse
 import multiprocessing
 from misc import call, AttrDict
 import bam2bw
 import time
+import re
+import glob
+import pandas as pd
+import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser(description='GRO-Seq Pipeline')
@@ -17,7 +21,73 @@ def parse_args():
     parser.add_argument("--chromInfo", dest = "chromInfo", type = str, required = True, help = "chromInfo file" )
     parser.add_argument("--threads", dest="threads", default=multiprocessing.cpu_count(), help="Number of threads to use [default is all available - {}]".format(multiprocessing.cpu_count()))
     args = parser.parse_args()
+
+    files = {}
+    if (args.file_1 or args.file_2) and args.file:
+        print >>sys.stderr, "\nCan not use single-ended fasta (-f) file and two pair-end files (-f1, -f2) at the same time\n"
+        sys.exit()
+    if not ((args.file_1 and args.file_2) or args.file):
+        print >>sys.stderr, "\nSingle-ended fasta (-f) file or two pair-end files (-f1, -f2) were not provided\n"
+        sys.exit()
+    if args.file:
+        files["-f"] = args.file
+    elif args.file_1 and args.file_2:
+        files["-f1"] = args.file_1
+        files["-f2"] = args.file_2
+    else:
+        print >>sys.stderr, "\nBoth files have to be provided in case of pair end sequencing\n"
+        sys.exit()
+
+    if args.genome:
+        files["-g"] = args.genome + ".1.bt2"
+    elif args.custom_genome:
+        files["-cg"] = args.custom_genome + ".1.bt2"
+    else:
+        print >>sys.stderr, "\nPath to genome is not specified (-g or -cg)\n"
+        sys.exit()
+
+    if args.annotation:
+        files["-a"] = args.annotation
+
+    if args.chromInfo:
+        files["--chromInfo"] = args.chromInfo
+    else:
+        print >>sys.stderr, "\nChromosome sizes are not specified (--chromInfo)\n"
+        sys.exit()
+
+    if not args.output:
+        print >>sys.stderr, "\nOutput is not specified\n"
+        sys.exit()
+
+    f_msg = ""
+    for f, p in files.items():
+        if not os.path.isfile(p):
+            f_msg += "\n{f} = {p}".format(f=f, p=p)
+    if f_msg:
+        print >>sys.stderr, "\nFollowing files were not found: {f_msg}".format(f_msg=f_msg)
+        sys.exit()
+
     return args
+
+def extract_rpkm(args):
+    annotations_cols = {"rpkm_chrom": str, "rpkm_start": np.float64, "rpkm_end": np.float64, "rpkm_symbol": str, "rpkm_ignore": str, "rpkm_sense": str}
+    rpkm_cols =  {"rpkm_symbol": str, "rpkm_ignore": str, "rpkm_reads": np.float64, "rpkm_length": np.int64, "rpkm_rpkm": np.float64}
+
+    annotation = pd.read_csv(args.annotation, sep='\t', names=annotations_cols.keys(), dtype=annotations_cols, usecols=["rpkm_chrom", "rpkm_start", "rpkm_end", "rpkm_symbol", "rpkm_sense"])
+
+    results = pd.DataFrame()
+    for path in [p.format(**vars(args)) for p in ["conv_rpkm/{output}.pos3.cnt", "conv_rpkm/{output}.neg3.cnt"]]:
+        path_basename = os.path.basename(path)
+        data = pd.read_csv(path, sep="\t", names=rpkm_cols.keys(), dtype=rpkm_cols, usecols=["rpkm_symbol", "rpkm_reads", "rpkm_length", "rpkm_rpkm"])
+        data['rpkm_output'] = args.output
+        data['rpkm_sense'] = "+" if re.sub(".*\.(.*)3.cnt", r"\1", path_basename)=="pos" else "-"
+
+        results_sense = data.merge(annotation, how='inner', on=["rpkm_symbol", "rpkm_sense"])
+        results_sense["rpkm_symbol"] = results_sense.rpkm_symbol.str.replace('_rev$', "", regex=True)
+        results = results.append(results_sense)
+
+    results.to_csv('conv_rpkm/{output}.rpkm.tsv'.format(**vars(args)), sep="\t", index=False)
+
 
 def read_concat(args):
     index_1 = args.file_1.find("L001")
@@ -89,8 +159,8 @@ def gmean_cal(args):
     call("awk '{{OFS=\"\\t\"}}{{printf \"%s\\t%s\\t%s\\t%s_%s_%s\\t.\\t.\\n\", $1, $2, $3, $1, $2, $3}}' conv_rpkm/{output}.transcripts.convergent.bed > conv_rpkm/{output}.transcripts.convergent.6.bed".format(**vars(args)), shell=True)
     call("/bin/samtools view -@ {threads} alignment/{output}.pos.bam | gfold count -annf BED -ann conv_rpkm/{output}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{output}.pos.cnt".format(**vars(args)), shell=True)
     call("/bin/samtools view -@ {threads} alignment/{output}.neg.bam | gfold count -annf BED -ann conv_rpkm/{output}.transcripts.convergent.6.bed -tag stdin -o conv_rpkm/{output}.neg.cnt".format(**vars(args)), shell=True)
-    call("/bin/samtools view alignment/{output}.pos.bam | gfold count -annf BED -s T -ann {annotation} -tag stdin -o conv_rpkm/{output}.pos3.cnt".format(**vars(args)), shell=True)
-    call("/bin/samtools view alignment/{output}.neg.bam | gfold count -annf BED -s T -ann {annotation} -tag stdin -o conv_rpkm/{output}.neg3.cnt".format(**vars(args)), shell=True)
+    call("/bin/samtools view -@ {threads} alignment/{output}.pos.bam | gfold count -annf BED -s T -ann {annotation} -tag stdin -o conv_rpkm/{output}.pos3.cnt".format(**vars(args)), shell=True)
+    call("/bin/samtools view -@ {threads} alignment/{output}.neg.bam | gfold count -annf BED -s T -ann {annotation} -tag stdin -o conv_rpkm/{output}.neg3.cnt".format(**vars(args)), shell=True)
     call("python2 /bin/COVT.gmean_cal.py conv_rpkm/{output} > conv_rpkm/{output}.gmean.cnt".format(**vars(args)), shell=True)
     call("sort -gr -k 4 conv_rpkm/{output}.gmean.cnt > conv_rpkm/{output}.gmean.cnt.sort".format(**vars(args)), shell=True)
     call("python2 /bin/Add.col.py conv_rpkm/{output}.gmean.cnt.sort > conv_rpkm/{output}.gmean.bed".format(**vars(args)), shell=True)
@@ -105,6 +175,7 @@ def GROSeqPL(args):
     homer(args)
     convergent(args)
     gmean_cal(args)
+    extract_rpkm(args)
 
     call("rm -rf alignment/{output}.sam".format(**vars(args)))
 
