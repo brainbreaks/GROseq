@@ -226,16 +226,20 @@ COPY src/misc.py  $DESTINATION/misc.py
 
 # Copy preprocessing script into image
 COPY preprocess/download.py  $DESTINATION/download.py
-RUN echo '#!/bin/bash \n python2 /bin/download.py "$@"' > $DESTINATION/download; chmod 755 $DESTINATION/download
+RUN echo '#!'"/bin/bash \n python2 $DESTINATION/download.py "'"$@"' > $DESTINATION/download; chmod 755 $DESTINATION/download
+
+# Copy extract_rpkm script into image
+COPY src/extract_rpkm.py  $DESTINATION/extract_rpkm.py
+RUN echo '#!'"/bin/bash \n python2 $DESTINATION/extract_rpkm.py "'"$@"' > $DESTINATION/extract-rpkm; chmod 755 $DESTINATION/extract-rpkm
 
 # Copy LSF script into image
 COPY preprocess/lsf.py  $DESTINATION/lsf.py
-RUN echo '#!/bin/bash \n python2 /bin/lsf.py "$@"' > $DESTINATION/lsf; chmod 755 $DESTINATION/lsf
+RUN echo '#!'"/bin/bash \n python2 $DESTINATION/lsf.py "'"$@"'> $DESTINATION/lsf; chmod 755 $DESTINATION/lsf
 
 
 # Copy LSF script into image
 COPY preprocess/gff_longest_transcript.py  $DESTINATION/gff_longest_transcript.py
-RUN echo '#!/bin/bash \n python2 /bin/gff_longest_transcript.py "$@"' > $DESTINATION/longest-transcript; chmod 755 $DESTINATION/longest-transcript
+RUN echo '#!'"/bin/bash \n python2 /$DESTINATION/gff_longest_transcript.py "'"$@"' > $DESTINATION/longest-transcript; chmod 755 $DESTINATION/longest-transcript
 
 ENV PATH="/bin/bedtools:${PATH}"
 

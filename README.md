@@ -45,7 +45,12 @@ singularity exec -B `pwd` groseq_latest.sif groseq -f AS-512172-LR-52456/fastq/A
 
 You can create annotation file with different clipping at the start or end of the transcript using `longest-transcript` command
 ```console
-singularity exec -B `pwd` groseq_latest.sif longest-transcript groseq mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
+singularity exec -B `pwd` groseq_latest.sif longest-transcript mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
+```
+
+You can extract rpkm using `extract-rpkm` command (done automatically as part of the pipeline)
+```console
+singularity exec -B `pwd` groseq_latest.sif extract-rpkm -a mm10.refGene.bed -o AS-512172-LR-52456_R1 --clip-start=50
 ```
 
 For convenience GRO-seq image contains a script that can be used to run the pipeline on LSF cluster 
@@ -88,7 +93,12 @@ docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it groseq -f A
 
 You can create annotation file with different clipping at the start or end of the transcript using `longest-transcript` command
 ```console
-docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint longest-transcript groseq --clip-start=50
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint longest-transcript groseq mm10.refGene.gtf.gz mm10.refGene.bed --clip-start=50
+```
+
+You can extract rpkm using `extract-rpkm` command (done automatically as part of the pipeline)
+```console
+docker run -v ${PWD}:/mount -u $(id -g ${USER}):$(id -g ${USER}) -it --entrypoint extract-rpkm groseq -a mm10.refGene.bed -o AS-512172-LR-52456_R1
 ```
 
 

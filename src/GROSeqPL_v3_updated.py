@@ -8,6 +8,7 @@ import re
 import glob
 import pandas as pd
 import numpy as np
+from collections import OrderedDict
 
 def parse_args():
     parser = argparse.ArgumentParser(description='GRO-Seq Pipeline')
@@ -16,7 +17,7 @@ def parse_args():
     parser.add_argument("-f2", dest = "file_2", type = str, required = False, help = "Read input file 2 of pair" )
     parser.add_argument("-o", dest = "output", type = str, required = True, help = "Output file name" )
     parser.add_argument("-g", dest = "genome", type = str, required = False, help = "Genome file to align to (do not include .fa)")
-    parser.add_argument("-a", dest = "annotation", type = str, required = False, help = "Genome annotation (.gtf/.gtf.tz file)")
+    parser.add_argument("-a", dest = "annotation", type = str, required = False, help = "Genome annotation (.bed format)")
     parser.add_argument("-cg", dest = "custom_genome", type = str, required = False, help = "Custom Genome file to align to (includes .fa)" )
     parser.add_argument("--chromInfo", dest = "chromInfo", type = str, required = True, help = "chromInfo file" )
     parser.add_argument("--threads", dest="threads", default=multiprocessing.cpu_count(), help="Number of threads to use [default is all available - {}]".format(multiprocessing.cpu_count()))
@@ -70,8 +71,8 @@ def parse_args():
     return args
 
 def extract_rpkm(args):
-    annotations_cols = {"rpkm_chrom": str, "rpkm_start": np.float64, "rpkm_end": np.float64, "rpkm_symbol": str, "rpkm_ignore": str, "rpkm_sense": str}
-    rpkm_cols =  {"rpkm_symbol": str, "rpkm_ignore": str, "rpkm_reads": np.float64, "rpkm_length": np.int64, "rpkm_rpkm": np.float64}
+    annotations_cols = OrderedDict([("rpkm_chrom", str), ("rpkm_start", np.float64), ("rpkm_end", np.float64), ("rpkm_symbol", str), ("rpkm_ignore", str), ("rpkm_sense", str)])
+    rpkm_cols =  OrderedDict([("rpkm_symbol", str), ("rpkm_ignore", str), ("rpkm_reads", np.float64), ("rpkm_length", np.int64), ("rpkm_rpkm", np.float64)])
 
     annotation = pd.read_csv(args.annotation, sep='\t', names=annotations_cols.keys(), dtype=annotations_cols, usecols=["rpkm_chrom", "rpkm_start", "rpkm_end", "rpkm_symbol", "rpkm_sense"])
 
@@ -188,4 +189,5 @@ def main():
     end = time.time()
     print("Total time: {:.1f} minutes".format((end - start)/60))
 
-main()
+if __name__ == "__main__":
+    main()
