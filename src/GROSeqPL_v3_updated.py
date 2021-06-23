@@ -84,7 +84,6 @@ def extract_rpkm(args):
         data['rpkm_sense'] = "+" if re.sub(".*\.(.*)3.cnt", r"\1", path_basename)=="pos" else "-"
 
         results_sense = data.merge(annotation, how='inner', on=["rpkm_symbol", "rpkm_sense"])
-        results_sense["rpkm_symbol"] = results_sense.rpkm_symbol.str.replace('_rev$', "", regex=True)
         results = results.append(results_sense)
 
     results.to_csv('conv_rpkm/{output}.rpkm.tsv'.format(**vars(args)), sep="\t", index=False)
